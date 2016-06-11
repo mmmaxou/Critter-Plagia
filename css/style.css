@@ -1,0 +1,159 @@
+body {
+    font-family: 'roboto';
+    background-color: #000000;
+    padding: 0px;
+    margin: 0px;
+}
+#gradient {
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    padding: 0px;
+    margin: 0px;
+}
+
+
+/*  HEADER */
+
+.mainbar {
+    background-color: white;
+    margin-bottom: 20px;
+}
+.mainbar a {
+    height: 6em;
+    vertical-align: middle;
+    line-height: 5em;
+}
+.mainbar ul {
+    margin: 2em 0;
+}
+
+h1 {
+    width: 90%;
+    margin: auto;
+    height: 2em;
+    display: block;
+    background-color: #337ab7;
+    line-height: 2em;
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 1.5em;
+    font-size: 1.6em;
+}
+h2 {
+    width: 90%;
+    margin: auto;
+    height: 2em;
+    display: block;
+    line-height: 2em;
+    border-radius: 5px;
+    border: 1px solid #aaa;
+    text-align: center;
+    margin-bottom: 1.5em;
+    font-size: 1.6em;
+}
+
+
+/* BODY */
+
+.tab-content {
+    margin-bottom: 100px;
+}
+table {
+    background-color: white;
+}
+tr {
+    height: 40px;
+}
+th {
+    text-align: center;
+}
+.progress-bar {
+    transition: 0.1s !important;
+}
+.promote-king,
+.promote-queen {
+    background-color: #a9d9a9;
+    border: none;
+    color: black;
+    font-weight: bold;
+}
+.supprimer-critter-king,
+.supprimer-critter-queen {
+    background-color: #ef9696;
+    border: none;
+    color: black;
+    font-weight: bold;
+}
+.promote-king:hover,
+.promote-queen:hover,
+.promote-king:focus,
+.promote-queen:focus {
+    background-color: #9ace9a;
+    border: none;
+    color: black;
+    font-weight: bold;
+}
+.supprimer-critter-king:hover,
+.supprimer-critter-queen:hover,
+.supprimer-critter-king:focus,
+.supprimer-critter-queen:focus {
+    background-color: #de7777;
+    border: none;
+    color: black;
+    font-weight: bold;
+}
+.worker-king,
+.worker-queen{
+    background-color: #d0e380;
+    border:none;
+    color:black;
+    font-weight: bold;
+}
+.worker-king:hover,
+.worker-king:focus,
+.worker-queen:hover,
+.worker-queen:focus {
+    background-color: #bfd36e;
+    border:none;
+    color:black;
+    font-weight: bold;
+}
+
+/* USINE */
+
+#usine button {
+    height: 3.65em;
+}
+
+.usine-creation .well {
+    background-color: #2067a3;
+    border: 1px solid #145d9a;
+    height: 4em;
+}
+.usine-creation div p {
+	color: white;
+    font-size: bold;
+    text-align: center;
+}
+
+
+/* SAVEBAR */
+
+.save-bar {
+    background-color:#535353;
+    padding: 15px 0;
+    position: fixed;
+    bottom:0px;
+    width: 100%;
+}
+.savePop {
+    position: fixed;
+    bottom: 70px;
+    height: 100px;
+    line-height: 60px;
+    background-color: #ff9797;
+    display: none;
+    border: none;
+}
