@@ -4,14 +4,24 @@
     <head>
         <meta charset="UTF-8">
         <title>Critter Plagia</title>
-        <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-        <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+
+        <script src="script/jquery-2.2.4.min.js"></script>
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+        <!--        <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">        -->
+
+        <!--        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>-->
+        <script src="bootstrap/js/bootstrap.min.js"></script>
+        <!--        <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>-->
+
+
         <link rel="stylesheet" type="text/css" href="css/reset.css">
         <link rel="stylesheet" type="text/css" href="css/style.css">
         <link rel="stylesheet" type="text/css" href="css/style768.css">
+
+        <link type="text/css" rel="stylesheet" href="css/jquery.qtip.css" />
+
         <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,900&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
     </head>
 
     <body>
@@ -23,7 +33,7 @@
             <ul class="nav nav-pills nav-justified">
                 <li class="active"><a data-toggle="pill" href="#home">Couvoir Royal</a></li>
                 <li><a data-toggle="pill" href="#usine">Usine</a></li>
-                <li class="disabled"><a data-toggle="pill" href="#">#Disabled</a></li>
+                <li><a data-toggle="pill" href="#army">Armée</a></li>
             </ul>
         </div>
 
@@ -48,12 +58,18 @@
         function newChildTab($parent,$id) {
             include 'tab-child.php';
         }
-        
+
         function newUsineTab($number,$type) {
             for($i = 0; $i < $number; $i++) {
                 echo '<td id="'.$type.''.$i.'">0</td>';
             }
         }
+        function newArmyTab() {
+            for ( $i = 0; $i < 10 ; $i++ ) {
+                include 'tab-army.php';
+            }
+        }
+        
         ?>
 
         <div class="tab-content">
@@ -65,7 +81,7 @@
                     <div class="wrapper-queen">
                         <div class="container col-lg-6 col-xs-12 well well-lg queen">
                             <div class="row">
-                                <h1>Reine</h1>
+                                <h1 id="a">Reine</h1>
                             </div>
                             <div class="row">
                                 <div class="col-xs-6 col-xs-offset-0 col-sm-2 col-sm-offset-8">
@@ -113,6 +129,7 @@
                                 <button type="button" class="btn btn-info worker-queen" style="border:none">Ouvrier</button>
                                 <button type="button" class="btn btn-info promote-queen" style="border:none">Reine</button>
                                 <button type="button" class="btn btn-info supprimer-critter-queen" style="border:none">Supprimer</button>
+                                <button type="button" class="btn btn-info soldier-queen" style="border:none">Soldat</button>
                             </div>
                             <br />
                             <div class="row">
@@ -189,6 +206,7 @@
                                 <button type="button" class="btn btn-info worker-king" style="border:none">Ouvrier</button>
                                 <button type="button" class="btn btn-info  promote-king" style="border:none">Roi</button>
                                 <button type="button" class="btn btn-info  supprimer-critter-king" style="border:none">Supprimer</button>
+                                <button type="button" class="btn btn-info soldier-king" style="border:none">Soldat</button>
                             </div>
                             <br />
                             <div class="row">
@@ -217,12 +235,13 @@
                 </div>
             </div>
 
+
             <!--            ###### PARTIE USINE  -->
 
             <div id="usine" class="tab-pane fade-in">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="wrapper-terre">
+                        <div id="wrapper-terre">
                             <div class="container col-md-6 col-xs-12 well well-lg terre">
                                 <div class="row text-center">
                                     <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
@@ -232,7 +251,7 @@
                                         <button class="btn btn-info btn-block" id="upgradeterre">Upgrade</button>
                                     </div>
                                     <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6">
-                                        <h2>25 / s</h2>
+                                        <h2 id="production-terre">25 / s</h2>
                                     </div>
                                 </div>
                                 <div class="row table-reponsive">
@@ -245,7 +264,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="wrapper-eau">
+                        <div id="wrapper-eau">
                             <div class="container col-md-6 col-xs-12 well well-lg eau">
                                 <div class="row text-center">
                                     <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
@@ -255,13 +274,13 @@
                                         <button class="btn btn-info btn-block" id="upgradeeau">Upgrade</button>
                                     </div>
                                     <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6">
-                                        <h2>25 / s</h2>
+                                        <h2 id="production-eau">25 / s</h2>
                                     </div>
                                 </div>
                                 <div class="row table-reponsive">
                                     <table class="table table-bordered text-center">
                                         <tr>
-                                            <th>Vitalité</th>
+                                            <th>Agilité</th>
                                             <?php newUsineTab(10,"eau") ?>
                                         </tr>
                                     </table>
@@ -270,7 +289,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="wrapper-transportTerre">
+                        <div id="wrapper-transportTerre">
                             <div class="container col-md-6 col-xs-12 well well-lg transportTerre">
                                 <div class="row text-center">
                                     <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
@@ -280,7 +299,7 @@
                                         <button class="btn btn-info btn-block" id="upgradetransportTerre">Upgrade</button>
                                     </div>
                                     <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6">
-                                        <h2>25 / s</h2>
+                                        <h2 id="production-transportTerre">25 / s</h2>
                                     </div>
                                 </div>
                                 <div class="row table-reponsive">
@@ -293,7 +312,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="wrapper-transportEau">
+                        <div id="wrapper-transportEau">
                             <div class="container col-md-6 col-xs-12 well well-lg transportEau">
                                 <div class="row text-center">
                                     <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
@@ -303,13 +322,13 @@
                                         <button class="btn btn-info btn-block" id="upgradetransportEau">Upgrade</button>
                                     </div>
                                     <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6">
-                                        <h2>25 / s</h2>
+                                        <h2 id="production-transportEau">25 / s</h2>
                                     </div>
                                 </div>
                                 <div class="row table-reponsive">
                                     <table class="table table-bordered text-center">
                                         <tr>
-                                            <th>Vitalité</th>
+                                            <th>Piqure</th>
                                             <?php newUsineTab(10,"transportEau") ?>
                                         </tr>
                                     </table>
@@ -318,19 +337,85 @@
                         </div>
                     </div>
                     <div class="row usine-creation">
-                        <div class="col-xs-offset-0 col-xs-12 col-sm-offset-2 col-sm-8 col-lg-offset-1 col-lg-2 col-md-offset-2 col-md-3 well">
-                            <p>Stock de Terre : 25</p>
+                        <div class="col-xs-offset-0 col-xs-12 col-sm-offset-2 col-sm-8 col-lg-offset-1 col-lg-2 col-md-offset-2 col-md-3 well" id="stock-terre">
+                            <p>Stock de Terre :</p>
+                            <p></p>
                         </div>
-                        <div class="col-xs-offset-0 col-xs-12 col-sm-offset-2 col-sm-8 col-lg-offset-1 col-lg-2 col-md-offset-2 col-md-3 well">
-                            <p>Stock d'Eau : 25</p>
+                        <div class="col-xs-offset-0 col-xs-12 col-sm-offset-2 col-sm-8 col-lg-offset-1 col-lg-2 col-md-offset-2 col-md-3 well" id="stock-eau">
+                            <p>Stock d'Eau :</p>
+                            <p></p>
                         </div>
-                        <div class="col-xs-offset-0 col-xs-12 col-sm-offset-2 col-sm-8 col-md-offset-3 col-md-6 col-lg-offset-1 col-lg-4 well">
-                            <p>Creation : 25 / s</p>
+                        <div class="col-xs-offset-0 col-xs-12 col-sm-offset-2 col-sm-8 col-md-offset-3 col-md-6 col-lg-offset-1 col-lg-4 well" id="creation">
+                            <p>Creation :</p>
+                            <p> / s</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!--            ####### PARTIE ARMY ######-->
+
+            <div id="army" class="tab-pane fade-in">
+                <div class="container-fluid">
+                    <div class="wrapper-army">
+                        <div class="container col-lg-6 col-xs-12 well well-lg army">
+                            <div class="row text-center">
+                                <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
+                                    <h1>Armée</h1>
+                                </div>
+                                <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
+                                    <button class="btn btn-info btn-block" id="army-upgrade">Upgrade</button>
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Level</th>
+                                                <th>Score</th>
+                                                <th>Vitalité</th>
+                                                <th>Force</th>
+                                                <th>Agilité</th>
+                                                <th>Morsure</th>
+                                                <th>Piqure</th>
+                                            </tr>
+                                        </thead>
+                                        <?php newArmyTab(); ?>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wrapper-map">
+                        <div class="container col-lg-6 col-xs-12 well well-lg war">
+                            <div class="row text-center">
+                                <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
+                                    <h1>Guerre</h1>
+                                </div>
+                                <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
+                                    <h2>Contre les Criquets</h2>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="row table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody id='create-table'>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+
+
+
+
 
         <!-- SAVE BAR -->
 
@@ -345,16 +430,22 @@
                 <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-2">
                     <button type="button" class="btn btn-info btn-block delete">Delete data</button>
                 </div>
+                <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-2" style="color:white;">
+                    <p>Appuyez sur <b>SHIFT</b> pour voir plus d'options</p>
+                </div>
                 <div class="col-xs-offset-3 col-xs-6 col-md-offset-4 col-md-4 well savePop">
                     <p>Game Saved</p>
                 </div>
             </div>
         </div>
-        
-        
-        
-        <script type="text/javascript" src="script/main.js"></script>        
-        
+
+
+        <script type="text/javascript" src="script/jquery.qtip.js"></script>
+
+        <script type="text/javascript" src="script/main.js"></script>
+        <script type="text/javascript" src="script/qtip.js"></script>
+
+
     </body>
 
 </html>

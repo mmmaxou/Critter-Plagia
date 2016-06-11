@@ -1,6 +1,7 @@
 body {
     font-family: 'roboto';
-    background-color: #000000;
+    background: url("../images/bg.jpg") no-repeat center fixed;
+    background-size: cover;
     padding: 0px;
     margin: 0px;
 }
@@ -120,25 +121,45 @@ th {
     color:black;
     font-weight: bold;
 }
+.soldier-king,
+.soldier-queen{
+    background-color: #ac6551;
+    border:none;
+    color:black;
+    font-weight: bold;
+}
+.soldier-king:hover,
+.soldier-king:focus,
+.soldier-queen:hover,
+.soldier-queen:focus {
+    background-color: #ac6551;
+    border:none;
+    color:black;
+    font-weight: bold;
+}
 
-/* USINE */
+/* USINE ET ARMY */
 
-#usine button {
+#usine button,
+#army button{
     height: 3.65em;
 }
 
-.usine-creation .well {
+.usine-creation .well{
     background-color: #2067a3;
     border: 1px solid #145d9a;
-    height: 4em;
+    height: 5.5em;
 }
 .usine-creation div p {
 	color: white;
     font-size: bold;
     text-align: center;
+    line-height: 1.5em;
 }
 
-
+.tile {
+    
+}
 /* SAVEBAR */
 
 .save-bar {
@@ -157,3 +178,4 @@ th {
     display: none;
     border: none;
 }
+
