@@ -1,71 +1,3 @@
-/* GRADIENT */
-
-/*
-var colors = new Array(
-    [62, 35, 255], [45, 175, 230], [255, 35, 98], [45, 175, 230], [255, 0, 255], [255, 35, 98]);
-
-var step = 0;
-//color table indices for: 
-// current color left
-// next color left
-// current color right
-// next color right
-var colorIndices = [0, 1, 2, 3];
-
-//transition speed
-var gradientSpeed = 0.002;
-
-function updateGradient() {
-
-    if ($ === undefined) return;
-
-    var c0_0 = colors[colorIndices[0]];
-    var c0_1 = colors[colorIndices[1]];
-    var c1_0 = colors[colorIndices[2]];
-    var c1_1 = colors[colorIndices[3]];
-
-    var istep = 1 - step;
-    var r1 = Math.round(istep * c0_0[0] + step * c0_1[0]);
-    var g1 = Math.round(istep * c0_0[1] + step * c0_1[1]);
-    var b1 = Math.round(istep * c0_0[2] + step * c0_1[2]);
-    var color1 = "rgb(" + r1 + "," + g1 + "," + b1 + ")";
-
-    var r2 = Math.round(istep * c1_0[0] + step * c1_1[0]);
-    var g2 = Math.round(istep * c1_0[1] + step * c1_1[1]);
-    var b2 = Math.round(istep * c1_0[2] + step * c1_1[2]);
-    var color2 = "rgb(" + r2 + "," + g2 + "," + b2 + ")";
-
-    $('#gradient').css({
-        background: "-webkit-gradient(linear, left top, right top, from(" + color1 + "), to(" + color2 + "))"
-    }).css({
-        background: "-moz-linear-gradient(left, " + color1 + " 0%, " + color2 + " 100%)"
-    });
-
-    step += gradientSpeed;
-    if (step >= 1) {
-        step %= 1;
-        colorIndices[0] = colorIndices[1];
-        colorIndices[2] = colorIndices[3];
-
-        //pick two new target color indices
-        //do not pick the same as the current one
-        colorIndices[1] = (colorIndices[1] + Math.floor(1 + Math.random() * (colors.length - 1))) % colors.length;
-        colorIndices[3] = (colorIndices[3] + Math.floor(1 + Math.random() * (colors.length - 1))) % colors.length;
-
-    }
-}
-
-setInterval(updateGradient, 20);
-
-
-*/
-
-/* ########## END GRADIENT ############### */
-
-
-
-
-
 // #############################
 // # DECLARATION DES FONCTIONS #
 // # ET INITIALISATION VARIABL #
@@ -110,7 +42,7 @@ function Usine(type, stat) {
         }
         return -1
     }; // NON TROUVE DONNE -1, SINON RENVOIE LA PLACE
-    this.findBestPlace = function (critter) {        
+    this.findBestPlace = function (critter) {
         var value = critter[this.stat];
         for (i = 0; i < this.level; i++) {
             if (this.workers[i] != undefined && this.workers[i] < value) {
@@ -122,7 +54,7 @@ function Usine(type, stat) {
     this.replaceWorker = function (place, critter) {
         this.workers[place] = critter[this.stat]
         if (typeof critter.king == "object") deleteKingChild()
-        if (typeof critter.queen == "object" ) deleteQueenChild();
+        if (typeof critter.queen == "object") deleteQueenChild();
     };
     this.update = function () {
         for (i = 0; i < 10; i++) {
@@ -191,14 +123,14 @@ function Army() {
         this.soldiers[place].level = 1
 
         if (typeof critter.king == "object") deleteKingChild()
-        if (typeof critter.queen == "object" ) deleteQueenChild();
+        if (typeof critter.queen == "object") deleteQueenChild();
 
         this.update()
         console.log(this.soldiers)
     }
     this.sortTab = function () {
-        this.soldiers.sort(function(a, b){
-            if ( a.level == b.level ) return b.score - a.score
+        this.soldiers.sort(function (a, b) {
+            if (a.level == b.level) return b.score - a.score
             return b.level - a.level
         })
     }
@@ -244,7 +176,7 @@ function Army() {
 function Map() {
     this.data = {
 
-        empty: true, 
+        empty: true,
 
         width: 0,
         height: 0,
@@ -252,31 +184,44 @@ function Map() {
         row: [],
 
         mound: {},
-        ennemyMound: {},
-
-        coord: {
-            mound: [],
-            ennemyMound: []
-        }
+        ennemyMound: {}
     }
 
     this.self = this
     this.init = function () {
         this.linkMap()
+        this.linkSiblings()
         this.placeMound()
         this.placeEnnemyMound()
-        this.useCoord()
+        this.addLevel()
         this.show()
     }
 
     this.linkMap = function () {
-        for (var i=0; i<this.data.height; i++){
+        for (var i = 0; i < this.data.height; i++) {
             this.data.row[i] = []
-            for (var j=0; j<this.data.width; j++){
-
+            for (var j = 0; j < this.data.width; j++) {
                 this.data.row[i][j] = {
-                    tile: $('#row'+i+'>#col'+j)
+                    tile: $('#row' + i + '>#col' + j),
+                    level: 0,
+                    coord: [i,j]
                 }
+            }
+        }
+    }
+    this.linkSiblings = function () {
+        for (var i = 0; i < this.data.height; i++) {
+            for (var j = 0; j < this.data.width; j++) {
+                var right=undefined,left=undefined,top=undefined,bot=undefined;
+                if (i-1 >= 0) top = this.data.row[i-1][j]
+                if (j+1 < this.data.width) right = this.data.row[i][j+1]
+                if (i+1 < this.data.height) bot = this.data.row[i+1][j]
+                if (j-1 >= 0) left = this.data.row[i][j-1]
+
+                this.data.row[i][j].top = top;
+                this.data.row[i][j].right = right;
+                this.data.row[i][j].bot = bot;
+                this.data.row[i][j].left = left;
 
             }
         }
@@ -286,45 +231,89 @@ function Map() {
             var x = Math.floor(Math.random() * this.data.width)
             var y = Math.floor(Math.random() * this.data.height)
 
-            this.data.coord.mound = [x,y]
+            this.data.mound = this.data.row[y][x]
         }
     }
     this.placeEnnemyMound = function () {
         if (Object.getOwnPropertyNames(this.data.ennemyMound).length === 0) {
-            var coord = this.distanceToMound()
+            var coord = this.createEnnemyMoundCoord()
             var x = coord[0]
             var y = coord[1]
 
-            this.data.coord.ennemyMound = [x,y]
+            this.data.ennemyMound = this.data.row[y][x]
         }
     }
-    this.distanceToMound = function () {
-        var mX = this.data.coord.mound[0]
-        var mY = this.data.coord.mound[1]
+    this.distanceToMound = function (y,x) {
+        var mY = this.data.mound.coord[0]
+        var mX = this.data.mound.coord[1]
         
-        console.log("mX:"+mX+"  mY:"+mY)
-        var x,y,deltaX,deltaY
+        var deltaX = Math.abs(x - mX)
+        var deltaY = Math.abs(y - mY)
+        
+        return deltaX + deltaY        
+    }
+    this.createEnnemyMoundCoord = function (distance) {
+        var minDist = Math.floor(this.data.width / 2 + this.data.height / 2 - 1);
+        if (typeof distance != 'undefined') {
+            minDist = distance;
+        }
+
+        console.log('minDist : ' + minDist);
+        var x, y, dist
 
         do {
             x = Math.floor(Math.random() * this.data.width)
             y = Math.floor(Math.random() * this.data.height)
-            
-            deltaX = Math.abs(x - mX)
-            deltaY = Math.abs(y - mY)
-            console.log("x: "+x+"__y: "+y+"__dX: "+deltaX+"__dY: "+deltaY+"__add: "+(deltaX+deltaY))
-        } while (deltaX+deltaY < 7 )
-        return [x,y]
-    }
 
-    this.useCoord = function () {
-        this.data.mound = this.data.row[this.data.coord.mound[0]][this.data.coord.mound[1]]
-        this.data.ennemyMound = this.data.row[this.data.coord.ennemyMound[0]][this.data.coord.ennemyMound[1]]
+            dist = this.distanceToMound(y,x)
+            
+        } while (dist < minDist)
+            return [x, y]
+            }
+
+    this.transformCoord = function (array) {
+        var result;
+        result = this.data.row[array[0]][array[1]];
+
+        return result;
     }
     this.show = function () {
+        for (var i = 0; i < this.data.height; i++) {
+            for (var j = 0; j < this.data.width; j++) {
+                this.data.row[i][j].tile.text(this.data.row[i][j].level)
+            }
+        }
         this.data.mound.tile.text("mound")
         this.data.ennemyMound.tile.text("ennemyMound")
     }
+    this.fBothSiblings = function (f) {
+        sibling = 'top';
+        f(sibling);
+        sibling = 'right';
+        f(sibling);
+        sibling = 'bot';
+        f(sibling);
+        sibling = 'left';
+        f(sibling);
+    }
+    
+    this.addLevel = function () {
+        var level
+        for (var i = 0; i < this.data.height; i++) {
+            for (var j = 0; j < this.data.width; j++) {
+                var square = this.data.row[i][j]
+                level = this.distanceToMound(square.coord[0],square.coord[1])
+               
+                var maxLevel = Math.floor((this.data.width + this.data.height) /2) - Math.floor((this.data.width * this.data.height) /100)
+                if (level > maxLevel ) level = maxLevel
+                square.level = level
+            }
+        }
+        this.show()
+    }
+
 }
+
 function initGame() {
     score = 10000;
     //    score = 0;
@@ -334,20 +323,20 @@ function initGame() {
     kingBar = 0;
 
     critterKing = {
-        vita: 5,
-        force: 5,
-        agi: 5,
-        morsure: 5,
-        piqure: 5,
-        score: 5
+        vita: 5
+        , force: 5
+        , agi: 5
+        , morsure: 5
+        , piqure: 5
+        , score: 5
     };
     critterQueen = {
-        vita: 5,
-        force: 5,
-        agi: 5,
-        morsure: 5,
-        piqure: 5,
-        score: 5
+        vita: 5
+        , force: 5
+        , agi: 5
+        , morsure: 5
+        , piqure: 5
+        , score: 5
     };
 
     kingChild = [];
@@ -406,32 +395,32 @@ setInterval(function () {
 // Creation des fonctions
 function saveGame() {
     var save = {
-        score: score,
-        generation: generation,
-        critterKing: critterKing,
-        critterQueen: critterQueen,
-        kingChild: kingChild,
-        queenChild: queenChild,
-        boost: boost,
-        upgrade: upgrade,
+        score: score
+        , generation: generation
+        , critterKing: critterKing
+        , critterQueen: critterQueen
+        , kingChild: kingChild
+        , queenChild: queenChild
+        , boost: boost
+        , upgrade: upgrade,
 
-        usineStockEau: usineStockEau,
-        usineStockTerre: usineStockTerre,
+        usineStockEau: usineStockEau
+        , usineStockTerre: usineStockTerre,
 
-        workersEau: usineEau.workers,
-        levelEau: usineEau.level,
-        workersTerre: usineTerre.workers,
-        levelTerre: usineTerre.level,
-        workersTransportEau: usineTransportEau.workers,
-        levelTransportEau: usineTransportEau.level,
-        workersTransportTerre: usineTransportTerre.workers,
-        levelTransportTerre: usineTransportTerre.level,
+        workersEau: usineEau.workers
+        , levelEau: usineEau.level
+        , workersTerre: usineTerre.workers
+        , levelTerre: usineTerre.level
+        , workersTransportEau: usineTransportEau.workers
+        , levelTransportEau: usineTransportEau.level
+        , workersTransportTerre: usineTransportTerre.workers
+        , levelTransportTerre: usineTransportTerre.level,
 
-        armySoldier: army.soldiers,
-        armyLevel: army.level,
+        armySoldier: army.soldiers
+        , armyLevel: army.level,
 
         mapData: map.data
-    };
+    }
 
     //    console.log("sauvegarde : ");
     //    console.log(save);
@@ -478,7 +467,7 @@ function loadGame() {
     updateData();
     updateUpgrade();
     army.update();
-    createTable(8,8);
+    createTable(8, 8);
 }
 
 function deleteGame() {
@@ -545,12 +534,12 @@ function createChild() {
     score = Math.round(score * 10) / 10;
 
     var child = {
-        vita: vita,
-        force: force,
-        agi: agi,
-        morsure: morsure,
-        piqure: piqure,
-        score: score
+        vita: vita
+        , force: force
+        , agi: agi
+        , morsure: morsure
+        , piqure: piqure
+        , score: score
     };
 
     var random = Math.round(Math.random());
@@ -1002,14 +991,16 @@ function setWorker(critter) {
         updateData();
     }
 }
-function setAllWorker(critter) {    
+
+function setAllWorker(critter) {
     if (typeof critter !== "undefined") {
         setWorker(critter);
 
         if (typeof critter.king == "object") setAllWorker(kingChild[0]);
-        if (typeof critter.queen == "object")setAllWorker(queenChild[0]);
+        if (typeof critter.queen == "object") setAllWorker(queenChild[0]);
     }
 }
+
 function findEmptyPlace(critter) {
     var usineTempo = findBestStat(critter);
     var critterTempo = critter;
@@ -1022,6 +1013,7 @@ function findEmptyPlace(critter) {
         findEmptyPlace(critterDebuff);
     }
 }
+
 function findBestStat(critter) {
     var a, b;
 
@@ -1055,53 +1047,56 @@ function setWorker2(critter) {
 
             if (found == false) {
                 if (typeof critter.king == "object") deleteKingChild()
-                if (typeof critter.queen == "object" ) deleteQueenChild();
+                if (typeof critter.queen == "object") deleteQueenChild();
 
             }
         }
     }
 }
+
 function setAllWorker2(critter) {
     if (typeof critter !== "undefined") {
         setWorker2(critter);
 
         if (typeof critter.king == "object") setAllWorker2(kingChild[0]);
-        if (typeof critter.queen == "object")setAllWorker2(queenChild[0]);
+        if (typeof critter.queen == "object") setAllWorker2(queenChild[0]);
     }
 }
+
 function findEmptyPlace2(critter) {
-    if (usineEau.findPlace(critter) != -1 ) {
+    if (usineEau.findPlace(critter) != -1) {
         usineEau.replaceWorker(usineEau.findPlace(critter), critter)
         return true
     }
-    if (usineTerre.findPlace(critter)!= -1 ) {
+    if (usineTerre.findPlace(critter) != -1) {
         usineTerre.replaceWorker(usineTerre.findPlace(critter), critter)
         return true
     }
-    if (usineTransportEau.findPlace(critter) != -1 ) {
+    if (usineTransportEau.findPlace(critter) != -1) {
         usineTransportEau.replaceWorker(usineTransportEau.findPlace(critter), critter)
         return true
     }
-    if (usineTransportTerre.findPlace(critter) != -1 ) {
+    if (usineTransportTerre.findPlace(critter) != -1) {
         usineTransportTerre.replaceWorker(usineTransportTerre.findPlace(critter), critter)
         return true
     }
     return false
 }
+
 function findBestPlace(critter) {
-    if (usineEau.findBestPlace(critter) != -1 ) {
+    if (usineEau.findBestPlace(critter) != -1) {
         usineEau.replaceWorker(usineEau.findBestPlace(critter), critter)
         return true
     }
-    if (usineTerre.findBestPlace(critter)!= -1 ) {
+    if (usineTerre.findBestPlace(critter) != -1) {
         usineTerre.replaceWorker(usineTerre.findBestPlace(critter), critter)
         return true
     }
-    if (usineTransportEau.findBestPlace(critter) != -1 ) {
+    if (usineTransportEau.findBestPlace(critter) != -1) {
         usineTransportEau.replaceWorker(usineTransportEau.findBestPlace(critter), critter)
         return true
     }
-    if (usineTransportTerre.findBestPlace(critter) != -1 ) {
+    if (usineTransportTerre.findBestPlace(critter) != -1) {
         usineTransportTerre.replaceWorker(usineTransportTerre.findBestPlace(critter), critter)
         return true
     }
@@ -1180,28 +1175,29 @@ function setSoldier(critter) {
         updateData()
     }
 }
+
 function setAllSoldier(critter) {
     if (typeof critter !== "undefined") {
         setSoldier(critter);
 
         if (typeof critter.king == "object") setAllSoldier(kingChild[0]);
-        if (typeof critter.queen == "object")setAllSoldier(queenChild[0]);
+        if (typeof critter.queen == "object") setAllSoldier(queenChild[0]);
     }
 }
 
 function createTable(width, height) {
 
-    if(map.data.empty == false) {
+    if (map.data.empty == false) {
         width = map.data.width
         height = map.data.height
     }
 
-    $('#create-table').empty()    
+    $('#create-table').empty()
     var table = "";
-    for (i=0; i<height; i++){
-        var row = '<tr id="row'+i+'" class="classTest">'
-        for (j=0; j<width; j++){
-            var col = '<td id="col'+j+'" class="classTest"><p>.</p></td>'
+    for (i = 0; i < height; i++) {
+        var row = '<tr id="row' + i + '" class="classTest">'
+        for (j = 0; j < width; j++) {
+            var col = '<td id="col' + j + '" class="classTest"><p>.</p></td>'
             row += col;
         }
         row += '</tr>'
