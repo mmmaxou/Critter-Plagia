@@ -138,7 +138,7 @@ th {
     font-weight: bold;
 }
 
-/* USINE ET ARMY */
+/* USINE */
 
 #usine button,
 #army button{
@@ -157,9 +157,18 @@ th {
     line-height: 1.5em;
 }
 
-.tile {
-    
+/* ARMY */
+
+.war #row1 {
+    background-color: azure;
 }
+.war td {
+    text-align: center;
+}
+.war .table>tbody>tr>td {
+    border-style: none;
+}
+
 /* SAVEBAR */
 
 .save-bar {
@@ -168,6 +177,9 @@ th {
     position: fixed;
     bottom:0px;
     width: 100%;
+}
+.save-bar > .row{
+    margin: 0;
 }
 .savePop {
     position: fixed;

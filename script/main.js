@@ -178,23 +178,25 @@ function Map() {
 
         empty: true,
 
-        width: 0,
-        height: 0,
+        width: 0
+        , height: 0,
 
         row: [],
 
-        mound: {},
-        ennemyMound: {}
+        mound: {}
+        , ennemyMound: {}
     }
+
 
     this.self = this
     this.init = function () {
         this.linkMap()
-        this.linkSiblings()
+        //        this.linkSiblings()
         this.placeMound()
         this.placeEnnemyMound()
         this.addLevel()
         this.show()
+        this.color()
     }
 
     this.linkMap = function () {
@@ -202,21 +204,25 @@ function Map() {
             this.data.row[i] = []
             for (var j = 0; j < this.data.width; j++) {
                 this.data.row[i][j] = {
-                    tile: $('#row' + i + '>#col' + j),
-                    level: 0,
-                    coord: [i,j]
+                    tile: $('#row' + i + '>#col' + j)
+                    , level: 0
+                    , coord: [i, j]
                 }
             }
         }
     }
+    /*
     this.linkSiblings = function () {
         for (var i = 0; i < this.data.height; i++) {
             for (var j = 0; j < this.data.width; j++) {
-                var right=undefined,left=undefined,top=undefined,bot=undefined;
-                if (i-1 >= 0) top = this.data.row[i-1][j]
-                if (j+1 < this.data.width) right = this.data.row[i][j+1]
-                if (i+1 < this.data.height) bot = this.data.row[i+1][j]
-                if (j-1 >= 0) left = this.data.row[i][j-1]
+                var right = undefined
+                    , left = undefined
+                    , top = undefined
+                    , bot = undefined;
+                if (i - 1 >= 0) top = this.data.row[i - 1][j]
+                if (j + 1 < this.data.width) right = this.data.row[i][j + 1]
+                if (i + 1 < this.data.height) bot = this.data.row[i + 1][j]
+                if (j - 1 >= 0) left = this.data.row[i][j - 1]
 
                 this.data.row[i][j].top = top;
                 this.data.row[i][j].right = right;
@@ -226,12 +232,17 @@ function Map() {
             }
         }
     }
+    */
     this.placeMound = function () {
         if (Object.getOwnPropertyNames(this.data.mound).length === 0) {
             var x = Math.floor(Math.random() * this.data.width)
             var y = Math.floor(Math.random() * this.data.height)
 
             this.data.mound = this.data.row[y][x]
+        }
+        else 
+        {
+            this.data.mound = this.data.row[this.data.mound.coord[0]][this.data.mound.coord[1]]
         }
     }
     this.placeEnnemyMound = function () {
@@ -242,15 +253,19 @@ function Map() {
 
             this.data.ennemyMound = this.data.row[y][x]
         }
+        else 
+        {
+            this.data.ennemyMound = this.data.row[this.data.ennemyMound.coord[0]][this.data.ennemyMound.coord[1]]
+        }
     }
-    this.distanceToMound = function (y,x) {
+    this.distanceToMound = function (y, x) {
         var mY = this.data.mound.coord[0]
         var mX = this.data.mound.coord[1]
-        
+
         var deltaX = Math.abs(x - mX)
         var deltaY = Math.abs(y - mY)
-        
-        return deltaX + deltaY        
+
+        return deltaX + deltaY
     }
     this.createEnnemyMoundCoord = function (distance) {
         var minDist = Math.floor(this.data.width / 2 + this.data.height / 2 - 1);
@@ -265,8 +280,8 @@ function Map() {
             x = Math.floor(Math.random() * this.data.width)
             y = Math.floor(Math.random() * this.data.height)
 
-            dist = this.distanceToMound(y,x)
-            
+            dist = this.distanceToMound(y, x)
+
         } while (dist < minDist)
             return [x, y]
             }
@@ -283,9 +298,23 @@ function Map() {
                 this.data.row[i][j].tile.text(this.data.row[i][j].level)
             }
         }
-        this.data.mound.tile.text("mound")
-        this.data.ennemyMound.tile.text("ennemyMound")
+        this.data.mound.tile.text("m")
+        this.data.ennemyMound.tile.text("e")
     }
+    this.color = function () {
+        for (var i = 0; i < this.data.height; i++) {
+            for (var j = 0; j < this.data.width; j++) {
+                var color
+                var maxLevel = Math.floor(this.data.width / 2 + this.data.height / 2);
+                
+                color = "rgb(" + greenYellowRed(this.data.row[i][j].level , maxLevel) + ")"
+                console.log(color)
+
+                this.data.row[i][j].tile.css("background-color",color)
+            }
+        }
+    }
+    /*
     this.fBothSiblings = function (f) {
         sibling = 'top';
         f(sibling);
@@ -296,16 +325,17 @@ function Map() {
         sibling = 'left';
         f(sibling);
     }
-    
+    */
+
     this.addLevel = function () {
         var level
         for (var i = 0; i < this.data.height; i++) {
             for (var j = 0; j < this.data.width; j++) {
                 var square = this.data.row[i][j]
-                level = this.distanceToMound(square.coord[0],square.coord[1])
-               
-                var maxLevel = Math.floor((this.data.width + this.data.height) /2) - Math.floor((this.data.width * this.data.height) /100)
-                if (level > maxLevel ) level = maxLevel
+                level = this.distanceToMound(square.coord[0], square.coord[1])
+
+                var maxLevel = Math.floor((this.data.width + this.data.height) / 2) - Math.floor((this.data.width * this.data.height) / 100)
+                if (level > maxLevel) level = maxLevel
                 square.level = level
             }
         }
@@ -420,6 +450,7 @@ function saveGame() {
         , armyLevel: army.level,
 
         mapData: map.data
+
     }
 
     //    console.log("sauvegarde : ");
@@ -1195,9 +1226,9 @@ function createTable(width, height) {
     $('#create-table').empty()
     var table = "";
     for (i = 0; i < height; i++) {
-        var row = '<tr id="row' + i + '" class="classTest">'
+        var row = '<tr id="row' + i + '" class="">'
         for (j = 0; j < width; j++) {
-            var col = '<td id="col' + j + '" class="classTest"><p>.</p></td>'
+            var col = '<td id="col' + j + '" class=""><p>.</p></td>'
             row += col;
         }
         row += '</tr>'
@@ -1209,6 +1240,25 @@ function createTable(width, height) {
     map.data.width = width
     map.data.empty = false
     map.init()
+}
+
+
+
+
+
+function greenYellowRed(number,max) {
+    number--
+    max = max / 2
+    var r,g,b;
+    if(number < max) {
+        r = Math.floor(255 * (number / max))
+        g = 255;
+    } else {
+        r = 255;
+        g = Math.floor(255 * ((max - number%max) / max))
+    }
+    b = 0
+    return r+","+g+","+b;
 }
 
 // #######################

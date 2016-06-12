@@ -401,7 +401,7 @@
                             </div>
                             <br/>
                             <div class="row table-responsive">
-                                <table class="table table-bordered">
+                                <table class="table">
                                     <tbody id='create-table'>
                                     </tbody>
                                 </table>
