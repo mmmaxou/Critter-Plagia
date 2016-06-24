@@ -96,6 +96,8 @@ function Usine(type, stat) {
 }
 
 function Army() {
+    this.self = this;
+    this.ennemyArmy = [];
     this.soldiers = [];
     this.level = 1;
 
@@ -171,6 +173,52 @@ function Army() {
             updateTooltip();
         }
     }
+
+    this.triggerBattle = function (level) {
+        $("#map").fadeOut('fast')
+        $("#battle").fadeIn('fast')
+
+        this.addAllyArmy();
+        this.addEnnemyArmy(level);
+
+        var IDinterval = setInterval(function () {
+
+            if (amr.soldiers.length > 0 && this.ennemyArmy.length > 0) {
+                this.allyAttack();
+            }
+        }, 2000)
+        }
+
+
+    this.allyAttack = function() {
+        for (i=0; i<this.soldiers.length; i++) {
+            setTimeout(250)
+            console.log("salut")
+        }
+    }
+
+    this.addAllyArmy = function () {
+        for (i = 0; i < this.soldiers.length; i++) {
+            var value = this.soldiers[i].vita * 10;
+            $('.wrapper-ally-critter').append(
+                '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::></p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + value + ' aria-valuemin="0" aria-valuemax=' + value + ' style="width:100%">' + value + '</div></div>' + '</div>')
+        }
+    }
+    this.addEnnemyArmy = function (level) {
+        var tier = Math.ceil(level / 3);
+
+        this.ennemyArmy = []
+
+        for (i = 0; i < tier; i++) {
+            this.ennemyArmy[i] = {
+                life: Math.floor(Math.random() * (level * 10) + level * 10 + 20)
+                , attack: Math.floor(Math.random() * (level) + level + 3)
+            }
+            var life = this.ennemyArmy[i].life;
+            $('.wrapper-ennemy-critter').append(
+                '<div class="battle-critter">' + '<p class="text-center">~~~~~~~[]=¤ԅ(ˊᗜˋ* )੭ </p><p>( ATK : ' + this.ennemyArmy[i].attack + ' )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + life + ' aria-valuemin="0" aria-valuemax=' + life + ' style="width:100%">' + life + '</div></div>' + '</div>')
+        }
+    }
 }
 
 function Map() {
@@ -208,6 +256,7 @@ function Map() {
                     , level: 0
                     , coord: [i, j]
                 }
+                this.data.row[i][j].tile.attr('onclick', "alerter(this)")
             }
         }
     }
@@ -239,9 +288,7 @@ function Map() {
             var y = Math.floor(Math.random() * this.data.height)
 
             this.data.mound = this.data.row[y][x]
-        }
-        else 
-        {
+        } else {
             this.data.mound = this.data.row[this.data.mound.coord[0]][this.data.mound.coord[1]]
         }
     }
@@ -252,9 +299,7 @@ function Map() {
             var y = coord[1]
 
             this.data.ennemyMound = this.data.row[y][x]
-        }
-        else 
-        {
+        } else {
             this.data.ennemyMound = this.data.row[this.data.ennemyMound.coord[0]][this.data.ennemyMound.coord[1]]
         }
     }
@@ -306,11 +351,10 @@ function Map() {
             for (var j = 0; j < this.data.width; j++) {
                 var color
                 var maxLevel = Math.floor(this.data.width / 2 + this.data.height / 2);
-                
-                color = "rgb(" + greenYellowRed(this.data.row[i][j].level , maxLevel) + ")"
-                console.log(color)
 
-                this.data.row[i][j].tile.css("background-color",color)
+                color = "rgb(" + greenYellowRed(this.data.row[i][j].level, maxLevel) + ")";
+
+                this.data.row[i][j].tile.css("background-color", color)
             }
         }
     }
@@ -1245,20 +1289,29 @@ function createTable(width, height) {
 
 
 
+function alerter(e) {
+    var col = $(e).attr('id').slice(3)
+    var row = $(e.parentElement).attr('id').slice(3)
 
-function greenYellowRed(number,max) {
+    var clickedObject = map.data.row[row][col]
+
+    console.log(clickedObject.level)
+    army.triggerBattle(clickedObject.level)
+}
+
+function greenYellowRed(number, max) {
     number--
     max = max / 2
-    var r,g,b;
-    if(number < max) {
+    var r, g, b;
+    if (number < max) {
         r = Math.floor(255 * (number / max))
         g = 255;
     } else {
         r = 255;
-        g = Math.floor(255 * ((max - number%max) / max))
+        g = Math.floor(255 * ((max - number % max) / max))
     }
     b = 0
-    return r+","+g+","+b;
+    return r + "," + g + "," + b;
 }
 
 // #######################

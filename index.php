@@ -69,7 +69,7 @@
                 include 'tab-army.php';
             }
         }
-        
+
         ?>
 
         <div class="tab-content">
@@ -357,7 +357,7 @@
             <!--            ####### PARTIE ARMY ######-->
 
             <div id="army" class="tab-pane fade-in">
-                <div class="container-fluid">
+                <div class="container-fluid" id="map">
                     <div class="wrapper-army">
                         <div class="container col-lg-6 col-xs-12 well well-lg army">
                             <div class="row text-center">
@@ -407,9 +407,23 @@
                                 </table>
                             </div>
                         </div>
+                    </div>                    
+                </div>
+                <div class="container-fluid" id="battle" style="display:none;">
+                    <div class="wrapper-battle well well-lg">
+                        <div class="row">
+                            <h2>Combat</h2>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6 wrapper-ally-critter"></div>
+                            <div class="col-sm-6 wrapper-ennemy-critter"></div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+
+
         </div>
 
 
