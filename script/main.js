@@ -101,6 +101,7 @@ function Army() {
     this.soldiers = [];
     this.level = 1;
     this.IDregeneration;
+    this.currentBattle;
 
     this.findPlace = function (critter) {
         var score = critter.score
@@ -182,19 +183,21 @@ function Army() {
 
     this.triggerBattle = function (clickedObject) {
 
-        if (this.verifyBattle(clickedObject))
+        this.currentBattle = clickedObject;
+
+        if (this.verifyBattle(this.currentBattle))
         {        
             $("#map").fadeOut('fast')
             $("#battle").fadeIn('fast')
 
             this.addAllyArmy();
-            this.addEnnemyArmy(clickedObject.level);
+            this.addEnnemyArmy(this.currentBattle.level);
 
             this.regeneration(false)
 
             this.battle();
         } else {
-            console.log('impossible : '+clickedObject.state)
+            console.log('impossible : '+this.currentBattle.state)
         }
     }
 
@@ -261,7 +264,12 @@ function Army() {
                 }
 
             } else {
-                console.log('battle ended')
+                if (army.ennemyArmy.length == 0) {
+
+                    console.log('win')
+                    map.changeState(army.currentBattle.coord, "clear")
+                    map.updateState()
+                }
                 clearInterval(IDinterval);
                 army.triggerMap();
             }
@@ -305,7 +313,6 @@ function Army() {
                 '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::>  ( ATK : <p id="ATK">'+ (army.soldiers[i].piqure + army.soldiers[i].morsure)/2 +'</p> )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + hp + ' aria-valuemin="0" aria-valuemax=' + vita*10 + ' style="width:'+percentage+'%">' + hp + '</div></div>' + '</div>')
         }
     }
-
     this.addEnnemyArmy = function (level) {
         var tier = Math.ceil(level / 3);
 
@@ -364,11 +371,20 @@ function Map() {
     this.self = this
 
     this.init = function () {
-        this.linkMap()
-        this.placeMound()
-        this.placeEnnemyMound()
-        this.addLevel()
-        this.show()
+
+        if (this.data.empty == true) {
+
+            this.linkMap()
+            this.placeMound()
+            this.placeEnnemyMound()
+            this.addLevel()
+
+            this.data.empty = false
+
+        } else {
+            this.linkJQuery()
+        }
+
         this.updateState()
     }
 
@@ -386,27 +402,27 @@ function Map() {
             }
         }
     }
-    this.placeMound = function () {
-        if (Object.getOwnPropertyNames(this.data.mound).length === 0) {
-            var x = Math.floor(Math.random() * this.data.width)
-            var y = Math.floor(Math.random() * this.data.height)
-
-            this.data.mound = this.data.row[y][x]
-        } else {
-            this.data.mound = this.data.row[this.data.mound.coord[0]][this.data.mound.coord[1]]
+    this.linkJQuery = function () {
+        for (var i = 0; i < this.data.height; i++) {
+            for (var j = 0; j < this.data.width; j++) {
+                this.data.row[i][j].tile = $('#row' + i + '>#col' + j)
+                this.data.row[i][j].tile.attr('onclick', "alerter(this)").css('background-color', '#fff')
+            }
         }
+    }
+    this.placeMound = function () {
+        var x = Math.floor(Math.random() * this.data.width)
+        var y = Math.floor(Math.random() * this.data.height)
+
+        this.data.mound = this.data.row[y][x]
         this.data.mound.state = "mound"
     }
     this.placeEnnemyMound = function () {
-        if (Object.getOwnPropertyNames(this.data.ennemyMound).length === 0) {
-            var coord = this.createEnnemyMoundCoord()
-            var x = coord[0]
-            var y = coord[1]
+        var coord = this.createEnnemyMoundCoord()
+        var x = coord[0]
+        var y = coord[1]
 
-            this.data.ennemyMound = this.data.row[y][x]
-        } else {
-            this.data.ennemyMound = this.data.row[this.data.ennemyMound.coord[0]][this.data.ennemyMound.coord[1]]
-        }
+        this.data.ennemyMound = this.data.row[y][x]
         this.data.ennemyMound.state = "ennemyMound"
     }
     this.distanceToMound = function (y, x) {
@@ -448,25 +464,39 @@ function Map() {
             for (var j = 0; j < this.data.width; j++) {
 
                 var emplacement = this.data.row[i][j];
-                if(emplacement.state == "mound") {
+
+                if(emplacement.state == "mound" || emplacement.state == "clear") {
+
                     this.color(emplacement);
+                    if (emplacement.state == "mound") {
+                        emplacement.tile.empty().append('<span class="glyphicon glyphicon-star" aria-hidden="true"></span>')
+                    }
+
                     this.applyToSiblings(emplacement, function(a) {
-                        if ( a.state != "ennemyMound" ) {
+                        if ( a.state != "ennemyMound" && a.state != "clickableEnnemyMound" && a.state != "mound" && a.state != "clear") {
                             a.state = "clickable"
                             map.color(a)
                             a.tile.text(a.level)
-                        } else if (a.state == "ennemyMound" ) {
+                        } else if (a.state == "ennemyMound" || a.state == "clickableEnnemyMound" ) {
                             a.state = "clickableEnnemyMound"
+                            a.tile.empty().append('<span class="glyphicons glyphicons-tint"></span>')
+                        } else if (a.state == "clear") {
+                            a.tile.text(a.level)
                         }
                     })
                 }
             }
         }
     }
+    this.changeState = function(array, state){
+        var i = array[0];
+        var j = array[1];
+        this.data.row[i][j].state = state;
+    }
 
     // Applique une fonction a tous les voisins directs
     // ' a ' est la variable qui contient la case centrale
-    // ' effet ' est la fonction a appliquer
+    // ' effet ' est la fonction a appliquer sur les cases voisines, qui sont l'argument passé dans la fonction effet
 
     this.applyToSiblings = function(a, effet) {
         var i = a.coord[0];
@@ -488,12 +518,8 @@ function Map() {
         if (right != undefined) {effet(right)}
         if (bot != undefined) {effet(bot)}
         if (left != undefined) {effet(left)}
-            }
-
-    this.show = function (coord) {
-        this.data.mound.tile.empty().append('<span class="glyphicon glyphicon-star" aria-hidden="true"></span>')
-        this.data.ennemyMound.tile.text("e")
     }
+
     this.color = function (coord) {
         var color;
         var maxLevel = Math.floor(this.data.width / 2 + this.data.height / 2);
@@ -514,10 +540,11 @@ function Map() {
     */
 
     this.addLevel = function () {
-        var level
+        var level,square
         for (var i = 0; i < this.data.height; i++) {
             for (var j = 0; j < this.data.width; j++) {
-                var square = this.data.row[i][j]
+                square = this.data.row[i][j]
+
                 level = this.distanceToMound(square.coord[0], square.coord[1])
 
                 var maxLevel = Math.floor((this.data.width + this.data.height) / 2) - Math.floor((this.data.width * this.data.height) / 100)
@@ -525,7 +552,6 @@ function Map() {
                 square.level = level
             }
         }
-        this.show()
     }
 
 }
@@ -611,6 +637,7 @@ setInterval(function () {
 // Creation des fonctions
 function saveGame() {
     var save = {
+
         score: score
         , generation: generation
         , critterKing: critterKing
@@ -618,24 +645,24 @@ function saveGame() {
         , kingChild: kingChild
         , queenChild: queenChild
         , boost: boost
-        , upgrade: upgrade,
+        , upgrade: upgrade
 
-        usineStockEau: usineStockEau
-        , usineStockTerre: usineStockTerre,
+        , usineStockEau: usineStockEau
+        , usineStockTerre: usineStockTerre
 
-        workersEau: usineEau.workers
+        , workersEau: usineEau.workers
         , levelEau: usineEau.level
         , workersTerre: usineTerre.workers
         , levelTerre: usineTerre.level
         , workersTransportEau: usineTransportEau.workers
         , levelTransportEau: usineTransportEau.level
         , workersTransportTerre: usineTransportTerre.workers
-        , levelTransportTerre: usineTransportTerre.level,
+        , levelTransportTerre: usineTransportTerre.level
 
-        armySoldier: army.soldiers
-        , armyLevel: army.level,
+        , armySoldier: army.soldiers
+        , armyLevel: army.level
 
-        mapData: map.data
+        , mapData: map.data
 
     }
 
@@ -684,6 +711,7 @@ function loadGame() {
     updateData();
     updateUpgrade();
     army.update();
+    army.regeneration();
     createTable(8, 8);
 }
 
@@ -1425,7 +1453,6 @@ function createTable(width, height) {
 
     map.data.height = height
     map.data.width = width
-    map.data.empty = false
     map.init()
 }
 
