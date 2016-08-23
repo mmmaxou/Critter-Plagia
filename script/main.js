@@ -100,6 +100,7 @@ function Army() {
     this.ennemyArmy = [];
     this.soldiers = [];
     this.level = 1;
+    this.IDregeneration;
 
     this.findPlace = function (critter) {
         var score = critter.score
@@ -128,7 +129,6 @@ function Army() {
         if (typeof critter.queen == "object") deleteQueenChild();
 
         this.update()
-        console.log(this.soldiers)
     }
     this.sortTab = function () {
         this.soldiers.sort(function (a, b) {
@@ -136,28 +136,23 @@ function Army() {
             return b.level - a.level
         })
     }
+
     this.update = function () {
         this.sortTab()
+
+        $('#army-level').text('Niveau ' + this.level)
+
         for (i = 0; i < 10; i++) {
-            if (i < this.level) {
+            if (i < this.level && this.soldiers[i] != undefined) {
+
                 $('#army' + i).show();
-                if (this.soldiers[i] != undefined) {
-                    $('#army' + i + 'Level').text(this.soldiers[i].level)
-                    $('#army' + i + 'Score').text(this.soldiers[i].score)
-                    $('#army' + i + 'Vita').text(this.soldiers[i].vita)
-                    $('#army' + i + 'Force').text(this.soldiers[i].force)
-                    $('#army' + i + 'Agi').text(this.soldiers[i].agi)
-                    $('#army' + i + 'Morsure').text(this.soldiers[i].morsure)
-                    $('#army' + i + 'Piqure').text(this.soldiers[i].piqure)
-                } else {
-                    $('#army' + i + 'Level').text("")
-                    $('#army' + i + 'Score').text("")
-                    $('#army' + i + 'Vita').text("")
-                    $('#army' + i + 'Force').text("")
-                    $('#army' + i + 'Agi').text("")
-                    $('#army' + i + 'Morsure').text("")
-                    $('#army' + i + 'Piqure').text("")
-                }
+
+                var vita = army.soldiers[i].vita;
+                var hp = army.soldiers[i].hp;
+                percentage = hp * 10 / vita;
+
+                $('#army'+i+' .progress-bar').css('width', percentage + '%').attr('aria-valuenow', hp).attr('aria-valuemax', vita*10).text(Math.round(hp))
+                $('#army'+i+' #ATK').text((army.soldiers[i].piqure + army.soldiers[i].morsure)/2)
 
             } else {
                 $('#army' + i).hide();
@@ -174,36 +169,143 @@ function Army() {
         }
     }
 
-    this.triggerBattle = function (level) {
-        $("#map").fadeOut('fast')
-        $("#battle").fadeIn('fast')
+    this.triggerMap = function(){
+        $("#battle").fadeOut('fast')
+        $("#map").fadeIn('fast')
 
-        this.addAllyArmy();
-        this.addEnnemyArmy(level);
+        $('.wrapper-ennemy-critter').empty()
+        $('.wrapper-ally-critter').empty()
+
+        this.update();
+        this.regeneration();
+    }
+
+    this.triggerBattle = function (clickedObject) {
+
+        if (this.verifyBattle(clickedObject))
+        {        
+            $("#map").fadeOut('fast')
+            $("#battle").fadeIn('fast')
+
+            this.addAllyArmy();
+            this.addEnnemyArmy(clickedObject.level);
+
+            this.regeneration(false)
+
+            this.battle();
+        } else {
+            console.log('impossible : '+clickedObject.state)
+        }
+    }
+
+    this.verifyBattle = function(tile) {
+
+        if (tile.state == "unclickable" || tile.state == "mound" || tile.state == "ennemyMound") {
+            return false
+        }
+        if (this.soldiers.length == 0) {
+            return false
+        }
+        return true;
+    }
+
+    this.battle = function() {
+        var i = 0,j = 0;
+        var attack,target;
+        var allyTurn = true;
 
         var IDinterval = setInterval(function () {
+            if (army.ennemyArmy.length > 0 && army.soldiers.length > 0) {
 
-            if (amr.soldiers.length > 0 && this.ennemyArmy.length > 0) {
-                this.allyAttack();
+                if (allyTurn) {
+                    //                    Calcul des degats et de la cible
+                    attack = Math.floor((army.soldiers[i].morsure + army.soldiers[i].piqure) / 2);
+                    target = getRandomIntInclusive(0,army.ennemyArmy.length-1);
+
+                    //                    Perte de vie sur la cible
+                    army.ennemyArmy[target].hp -= attack;
+
+                    if (army.ennemyArmy[target].hp <= 0) {
+                        army.unitKilled('ennemy',target);
+                        j = 0;
+                    } 
+                    //                    Augmentation de la valeur de i : critter suivant
+                    if (i == army.soldiers.length-1) {i = 0}
+                    else { i++ }
+                }
+
+                if (allyTurn == false) {
+                    //                    Calcul des degats et de la cible
+                    attack = army.ennemyArmy[j].attack;
+                    target = getRandomIntInclusive(0,army.soldiers.length-1);
+
+                    //                    Perte de vie sur la cible
+                    army.soldiers[target].hp -= attack;
+
+                    if (army.soldiers[target].hp <= 0) {
+                        army.unitKilled('ally',target)
+                        i = 0;
+                    };
+
+                    //                    Augmentation de la valeur de j : critter suivant
+                    if (j == army.ennemyArmy.length-1) { j = 0 }
+                    else { j++ }
+                }
+
+                army.battleUpdate();                
+
+                if (allyTurn) {
+                    allyTurn = false
+                } else {
+                    allyTurn = true
+                }
+
+            } else {
+                console.log('battle ended')
+                clearInterval(IDinterval);
+                army.triggerMap();
             }
-        }, 2000)
+        }, 200)
+
         }
 
+    this.unitKilled = function(side, position) {
+        if (side == 'ally') {
+            this.soldiers.splice(position,1);
 
-    this.allyAttack = function() {
-        for (i=0; i<this.soldiers.length; i++) {
-            setTimeout(250)
-            console.log("salut")
+            for (i = 0; i < this.level; i++) {
+                if (this.soldiers[i] == undefined) {
+                    $('.wrapper-ally-critter .battle-critter:nth-child('+(i+1)+')').hide()
+                }
+            }
+        }
+        if (side == 'ennemy') {
+            this.ennemyArmy.splice(position,1);
+            $('.wrapper-ennemy-critter .battle-critter:last-child').detach()
+        }   
+    }
+    this.battleUpdate = function() {
+        for (i = 0; i < this.soldiers.length; i++) {
+            var percentage = this.soldiers[i].hp*10 / this.soldiers[i].vita;
+            $('.wrapper-ally-critter .battle-critter:nth-child('+(i+1)+') .progress-bar').css('width', percentage + '%').attr('aria-valuenow', this.soldiers[i].hp).text(Math.round(this.soldiers[i].hp * 10) / 10)
+        }
+        for (i = 0; i < this.ennemyArmy.length; i++) {
+            var percentage = this.ennemyArmy[i].hp*100 / this.ennemyArmy[i].life;
+            $('.wrapper-ennemy-critter .battle-critter:nth-child('+(i+1)+') .progress-bar').css('width', percentage + '%').attr('aria-valuenow', this.ennemyArmy[i].hp).text(Math.round(this.ennemyArmy[i].hp * 10) / 10)
         }
     }
 
     this.addAllyArmy = function () {
         for (i = 0; i < this.soldiers.length; i++) {
-            var value = this.soldiers[i].vita * 10;
+            var hp = this.soldiers[i].hp;
+            var vita = this.soldiers[i].vita;
+            percentage = hp * 10 / vita;
+
             $('.wrapper-ally-critter').append(
-                '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::></p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + value + ' aria-valuemin="0" aria-valuemax=' + value + ' style="width:100%">' + value + '</div></div>' + '</div>')
+                '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::>  ( ATK : <p id="ATK">'+ (army.soldiers[i].piqure + army.soldiers[i].morsure)/2 +'</p> )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + hp + ' aria-valuemin="0" aria-valuemax=' + vita*10 + ' style="width:'+percentage+'%">' + hp + '</div></div>' + '</div>')
         }
     }
+
     this.addEnnemyArmy = function (level) {
         var tier = Math.ceil(level / 3);
 
@@ -214,9 +316,35 @@ function Army() {
                 life: Math.floor(Math.random() * (level * 10) + level * 10 + 20)
                 , attack: Math.floor(Math.random() * (level) + level + 3)
             }
+            this.ennemyArmy[i].hp = this.ennemyArmy[i].life;
             var life = this.ennemyArmy[i].life;
             $('.wrapper-ennemy-critter').append(
                 '<div class="battle-critter">' + '<p class="text-center">~~~~~~~[]=¤ԅ(ˊᗜˋ* )੭ </p><p>( ATK : ' + this.ennemyArmy[i].attack + ' )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + life + ' aria-valuemin="0" aria-valuemax=' + life + ' style="width:100%">' + life + '</div></div>' + '</div>')
+        }
+
+    }
+
+    this.regeneration = function(active=true) {
+
+        if (active == false) {
+            clearInterval(army.IDregeneration);
+            console.log('regeneration stop')
+        } else {
+            console.log('regeneration start')
+            army.IDregeneration = setInterval(function () {       
+
+                for (var i=0; i<army.level; i++){
+                    if(army.soldiers[i] != undefined) {
+                        var a = army.soldiers[i];
+                        a.hp += a.vita / 10;
+
+                        if ( a.hp/10 >= a.vita ) {
+                            a.hp = a.vita*10;                        
+                        }
+                    }
+                }
+                army.update();
+            },1000)
         }
     }
 }
@@ -225,26 +353,23 @@ function Map() {
     this.data = {
 
         empty: true,
-
-        width: 0
-        , height: 0,
-
+        width: 0,
+        height: 0,
         row: [],
+        mound: {},
+        ennemyMound: {}
 
-        mound: {}
-        , ennemyMound: {}
     }
 
-
     this.self = this
+
     this.init = function () {
         this.linkMap()
-        //        this.linkSiblings()
         this.placeMound()
         this.placeEnnemyMound()
         this.addLevel()
         this.show()
-        this.color()
+        this.updateState()
     }
 
     this.linkMap = function () {
@@ -255,33 +380,12 @@ function Map() {
                     tile: $('#row' + i + '>#col' + j)
                     , level: 0
                     , coord: [i, j]
+                    , state: "unclickable"
                 }
-                this.data.row[i][j].tile.attr('onclick', "alerter(this)")
+                this.data.row[i][j].tile.attr('onclick', "alerter(this)").css('background-color', '#fff')
             }
         }
     }
-    /*
-    this.linkSiblings = function () {
-        for (var i = 0; i < this.data.height; i++) {
-            for (var j = 0; j < this.data.width; j++) {
-                var right = undefined
-                    , left = undefined
-                    , top = undefined
-                    , bot = undefined;
-                if (i - 1 >= 0) top = this.data.row[i - 1][j]
-                if (j + 1 < this.data.width) right = this.data.row[i][j + 1]
-                if (i + 1 < this.data.height) bot = this.data.row[i + 1][j]
-                if (j - 1 >= 0) left = this.data.row[i][j - 1]
-
-                this.data.row[i][j].top = top;
-                this.data.row[i][j].right = right;
-                this.data.row[i][j].bot = bot;
-                this.data.row[i][j].left = left;
-
-            }
-        }
-    }
-    */
     this.placeMound = function () {
         if (Object.getOwnPropertyNames(this.data.mound).length === 0) {
             var x = Math.floor(Math.random() * this.data.width)
@@ -291,6 +395,7 @@ function Map() {
         } else {
             this.data.mound = this.data.row[this.data.mound.coord[0]][this.data.mound.coord[1]]
         }
+        this.data.mound.state = "mound"
     }
     this.placeEnnemyMound = function () {
         if (Object.getOwnPropertyNames(this.data.ennemyMound).length === 0) {
@@ -302,6 +407,7 @@ function Map() {
         } else {
             this.data.ennemyMound = this.data.row[this.data.ennemyMound.coord[0]][this.data.ennemyMound.coord[1]]
         }
+        this.data.ennemyMound.state = "ennemyMound"
     }
     this.distanceToMound = function (y, x) {
         var mY = this.data.mound.coord[0]
@@ -337,26 +443,62 @@ function Map() {
 
         return result;
     }
-    this.show = function () {
+    this.updateState = function(){
         for (var i = 0; i < this.data.height; i++) {
             for (var j = 0; j < this.data.width; j++) {
-                this.data.row[i][j].tile.text(this.data.row[i][j].level)
+
+                var emplacement = this.data.row[i][j];
+                if(emplacement.state == "mound") {
+                    this.color(emplacement);
+                    this.applyToSiblings(emplacement, function(a) {
+                        if ( a.state != "ennemyMound" ) {
+                            a.state = "clickable"
+                            map.color(a)
+                            a.tile.text(a.level)
+                        } else if (a.state == "ennemyMound" ) {
+                            a.state = "clickableEnnemyMound"
+                        }
+                    })
+                }
             }
         }
-        this.data.mound.tile.text("m")
+    }
+
+    // Applique une fonction a tous les voisins directs
+    // ' a ' est la variable qui contient la case centrale
+    // ' effet ' est la fonction a appliquer
+
+    this.applyToSiblings = function(a, effet) {
+        var i = a.coord[0];
+        var j = a.coord[1];
+
+        var right = undefined
+        var left = undefined
+        var top = undefined
+        var bot = undefined
+
+        //Verification si les alentours existe et attribution des cases
+
+        if (i - 1 >= 0) top = this.data.row[i - 1][j]
+        if (j + 1 < this.data.width) right = this.data.row[i][j + 1]
+        if (i + 1 < this.data.height) bot = this.data.row[i + 1][j]
+        if (j - 1 >= 0) left = this.data.row[i][j - 1]
+
+        if (top != undefined) {effet(top)}
+        if (right != undefined) {effet(right)}
+        if (bot != undefined) {effet(bot)}
+        if (left != undefined) {effet(left)}
+            }
+
+    this.show = function (coord) {
+        this.data.mound.tile.empty().append('<span class="glyphicon glyphicon-star" aria-hidden="true"></span>')
         this.data.ennemyMound.tile.text("e")
     }
-    this.color = function () {
-        for (var i = 0; i < this.data.height; i++) {
-            for (var j = 0; j < this.data.width; j++) {
-                var color
-                var maxLevel = Math.floor(this.data.width / 2 + this.data.height / 2);
-
-                color = "rgb(" + greenYellowRed(this.data.row[i][j].level, maxLevel) + ")";
-
-                this.data.row[i][j].tile.css("background-color", color)
-            }
-        }
+    this.color = function (coord) {
+        var color;
+        var maxLevel = Math.floor(this.data.width / 2 + this.data.height / 2);
+        color = "rgb(" + greenYellowRed(coord.level, maxLevel) + ")";
+        coord.tile.css("background-color", color)
     }
     /*
     this.fBothSiblings = function (f) {
@@ -610,6 +752,7 @@ function createChild() {
 
     var child = {
         vita: vita
+        , hp: vita*10
         , force: force
         , agi: agi
         , morsure: morsure
@@ -1272,7 +1415,7 @@ function createTable(width, height) {
     for (i = 0; i < height; i++) {
         var row = '<tr id="row' + i + '" class="">'
         for (j = 0; j < width; j++) {
-            var col = '<td id="col' + j + '" class=""><p>.</p></td>'
+            var col = '<td id="col' + j + '" class=""><p></p></td>'
             row += col;
         }
         row += '</tr>'
@@ -1286,19 +1429,14 @@ function createTable(width, height) {
     map.init()
 }
 
-
-
-
 function alerter(e) {
     var col = $(e).attr('id').slice(3)
     var row = $(e.parentElement).attr('id').slice(3)
 
     var clickedObject = map.data.row[row][col]
 
-    console.log(clickedObject.level)
-    army.triggerBattle(clickedObject.level)
+    army.triggerBattle(clickedObject)
 }
-
 function greenYellowRed(number, max) {
     number--
     max = max / 2
@@ -1313,7 +1451,11 @@ function greenYellowRed(number, max) {
     b = 0
     return r + "," + g + "," + b;
 }
-
+function getRandomIntInclusive(min, max){
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min +1)) + min;
+}
 // #######################
 // # APPEL DES FONCTIONS #
 // #######################

@@ -367,25 +367,13 @@
                                 <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
                                     <button class="btn btn-info btn-block" id="army-upgrade">Upgrade</button>
                                 </div>
+                                <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
+                                    <h2 id="army-level">Niveau 1</h2>
+                                </div>
                             </div>
                             <br />
                             <div class="row">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Level</th>
-                                                <th>Score</th>
-                                                <th>Vitalité</th>
-                                                <th>Force</th>
-                                                <th>Agilité</th>
-                                                <th>Morsure</th>
-                                                <th>Piqure</th>
-                                            </tr>
-                                        </thead>
-                                        <?php newArmyTab(); ?>
-                                    </table>
-                                </div>
+                                <?php newArmyTab(); ?>
                             </div>
                         </div>
                     </div>
@@ -425,7 +413,6 @@
 
 
         </div>
-
 
 
 
