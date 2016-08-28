@@ -151,7 +151,7 @@ th {
     height: 5.5em;
 }
 .usine-creation div p {
-	color: white;
+    color: white;
     font-size: bold;
     text-align: center;
     line-height: 1.5em;
@@ -167,6 +167,8 @@ th {
 }
 .war .table>tbody>tr>td {
     border-style: none;
+    cursor: pointer; 
+    cursor: hand;
 }
 
 .battle-critter{
@@ -210,3 +212,21 @@ th {
     border: none;
 }
 
+.infoPop {
+    position: fixed;
+    bottom: 70px;
+    min-height: 100px;
+    margin-top: 50%;
+    color: white;
+    background-color: #55a2e5;
+    border: none;
+    display: flex; /* contexte sur le parent */
+    flex-direction: column; /* direction d'affichage verticale */
+    justify-content: center; /* alignement vertical */ 
+}
+
+/* QTIP */
+
+.custom-qtip {
+    max-width: 30vw;
+}

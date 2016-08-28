@@ -28,6 +28,13 @@ var usineTransportEau;
 var usineStockEau;
 var usineStockTerre;
 
+var usineCursor = [0,0];
+
+var admin = false;
+var gameSpeed = 1;
+
+var timer
+
 function Usine(type, stat) {
     this.type = type;
     this.stat = stat;
@@ -51,10 +58,28 @@ function Usine(type, stat) {
         }
         return -1;
     }
+    this.checkBetter = function ( critter ) {
+        log(usineCursor)
+        if ( this.workers[ usineCursor[1] ][this.stat] < critter[this.type] ) {
+            this.replaceWorker( critter )
+            log("replaced" + this.stat +" , "+ usineCursor[1])
+            return true
+        } else {
+            log("not replaced")
+            usineCursor[1]++;
+            if (usineCursor[1] >= (this.workers.length-1)) {
+                usineCursor[1] = 0
+                usineCursor[0]++
+                usineCursor[0] = usineCursor[0]%4
+            }
+            return false
+        }
+    }
     this.replaceWorker = function (place, critter) {
         this.workers[place] = critter[this.stat]
         if (typeof critter.king == "object") deleteKingChild()
         if (typeof critter.queen == "object") deleteQueenChild();
+        this.update()
     };
     this.update = function () {
         for (i = 0; i < 10; i++) {
@@ -91,17 +116,22 @@ function Usine(type, stat) {
     };
     this.updateProduction = function () {
         this.production();
-        $('#production-' + this.type).text(this.productionNum + ' / s');
+        if ($('#production-' + this.type).text() != this.productionNum + ' / s' ) {
+            $('#production-' + this.type).text(this.productionNum + ' / s');
+        }
     };
+    this.getProduction = function() {
+        return this.productionNum
+    }
 }
 
 function Army() {
     this.self = this;
     this.ennemyArmy = [];
     this.soldiers = [];
-    this.level = 1;
+    this.level = 0;
     this.IDregeneration;
-    this.currentBattle;
+    this.currentBattle = false;
 
     this.findPlace = function (critter) {
         var score = critter.score
@@ -141,7 +171,9 @@ function Army() {
     this.update = function () {
         this.sortTab()
 
-        $('#army-level').text('Niveau ' + this.level)
+        if ($('#army-level').text() != 'Niveau ' + this.level) {
+            $('#army-level').text('Niveau ' + this.level)
+        }
 
         for (i = 0; i < 10; i++) {
             if (i < this.level && this.soldiers[i] != undefined) {
@@ -152,7 +184,7 @@ function Army() {
                 var hp = army.soldiers[i].hp;
                 percentage = hp * 10 / vita;
 
-                $('#army'+i+' .progress-bar').css('width', percentage + '%').attr('aria-valuenow', hp).attr('aria-valuemax', vita*10).text(Math.round(hp))
+                $('#army'+i+' .progress-bar').css('width', percentage + '%').attr('aria-valuenow', hp).attr('aria-valuemax', vita*10).text(fixNumber(hp))
                 $('#army'+i+' #ATK').text((army.soldiers[i].piqure + army.soldiers[i].morsure)/2)
 
             } else {
@@ -161,12 +193,14 @@ function Army() {
         }
     }
     this.upgrade = function () {
-        if (score > Math.pow(10, (this.level))) {
-            score -= Math.pow(10, (this.level));
-            this.level++;
-            updateData();
+        if (score > Math.pow(10, (this.level+1))) {
+            score -= Math.pow(10, (this.level+1));
+            this.level++
             this.update()
             updateTooltip();
+            if (this.level == 1) {
+                createTable(8,8)
+            }
         }
     }
 
@@ -196,17 +230,24 @@ function Army() {
             this.regeneration(false)
 
             this.battle();
-        } else {
-            console.log('impossible : '+this.currentBattle.state)
         }
     }
 
     this.verifyBattle = function(tile) {
 
-        if (tile.state == "unclickable" || tile.state == "mound" || tile.state == "ennemyMound") {
+        if (tile.state == "unclickable"){
+            infoPop("Tu ne peut pas encore combattre ici. Combat d'abord les cases colorées")
             return false
         }
+        if (tile.state == "mound") {
+            infoPop("C'est ta base")
+            return false
+        }
+        if (tile.state == "mound" || tile.state == "ennemyMound" || tile.state == "clear") {
+            return false
+        }    
         if (this.soldiers.length == 0) {
+            infoPop("Il te faut une armée pour combattre. Transforme des enfants en soldats dans la salle aux Dongers")
             return false
         }
         return true;
@@ -219,43 +260,44 @@ function Army() {
 
         var IDinterval = setInterval(function () {
             if (army.ennemyArmy.length > 0 && army.soldiers.length > 0) {
+                if ( admin == true ) {
+                    target = getRandomIntInclusive(0,army.ennemyArmy.length-1);
+                    army.unitKilled('ennemy',target)
+                    j = 0
+                }
 
                 if (allyTurn) {
-                    //                    Calcul des degats et de la cible
-                    attack = Math.floor((army.soldiers[i].morsure + army.soldiers[i].piqure) / 2);
-                    target = getRandomIntInclusive(0,army.ennemyArmy.length-1);
+                    for (i=0; i<army.soldiers.length; i++) {
+                        //                    Calcul des degats et de la cible
+                        attack = Math.floor((army.soldiers[i].morsure + army.soldiers[i].piqure) / 2);
+                        target = getRandomIntInclusive(0,army.ennemyArmy.length-1);
 
-                    //                    Perte de vie sur la cible
-                    army.ennemyArmy[target].hp -= attack;
+                        //                    Perte de vie sur la cible
+                        army.ennemyArmy[target].hp -= attack;
 
-                    if (army.ennemyArmy[target].hp <= 0) {
-                        army.unitKilled('ennemy',target);
-                        j = 0;
-                    } 
-                    //                    Augmentation de la valeur de i : critter suivant
-                    if (i == army.soldiers.length-1) {i = 0}
-                    else { i++ }
+                        if (army.ennemyArmy[target].hp <= 0) {
+                            army.unitKilled('ennemy',target);
+                            j = 0;
+                        }  
+                    }
                 }
 
                 if (allyTurn == false) {
-                    //                    Calcul des degats et de la cible
-                    attack = army.ennemyArmy[j].attack;
-                    target = getRandomIntInclusive(0,army.soldiers.length-1);
+                    for (j=0; j<army.ennemyArmy.length; j++) {
+                        //                    Calcul des degats et de la cible
+                        attack = army.ennemyArmy[j].attack;
+                        target = getRandomIntInclusive(0,army.soldiers.length-1);
 
-                    //                    Perte de vie sur la cible
-                    army.soldiers[target].hp -= attack;
+                        //                    Perte de vie sur la cible
+                        army.soldiers[target].hp -= attack;
 
-                    if (army.soldiers[target].hp <= 0) {
-                        army.unitKilled('ally',target)
-                        i = 0;
-                    };
-
-                    //                    Augmentation de la valeur de j : critter suivant
-                    if (j == army.ennemyArmy.length-1) { j = 0 }
-                    else { j++ }
+                        if (army.soldiers[target].hp <= 0) {
+                            army.unitKilled('ally',target)
+                            i = 0;
+                        }
+                    }
                 }
-
-                army.battleUpdate();                
+                army.battleUpdate();  
 
                 if (allyTurn) {
                     allyTurn = false
@@ -263,17 +305,21 @@ function Army() {
                     allyTurn = true
                 }
 
-            } else {
+            } else { // COMBAT TERMINÉ
                 if (army.ennemyArmy.length == 0) {
 
-                    console.log('win')
+                    if ( army.currentBattle.state == "clickableEnnemyMound") {
+                        map.transformCoord(map.data.ennemyMound.coord) == "clearedEnnemyMound"
+                        map.addButton()
+                    }
                     map.changeState(army.currentBattle.coord, "clear")
                     map.updateState()
                 }
                 clearInterval(IDinterval);
+                army.currentBattle = false;
                 army.triggerMap();
             }
-        }, 200)
+        }, 1000*gameSpeed)
 
         }
 
@@ -307,7 +353,8 @@ function Army() {
         for (i = 0; i < this.soldiers.length; i++) {
             var hp = this.soldiers[i].hp;
             var vita = this.soldiers[i].vita;
-            percentage = hp * 10 / vita;
+            percentage = fixNumber(hp * 10 / vita);
+            hp = fixNumber(hp)
 
             $('.wrapper-ally-critter').append(
                 '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::>  ( ATK : <p id="ATK">'+ (army.soldiers[i].piqure + army.soldiers[i].morsure)/2 +'</p> )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + hp + ' aria-valuemin="0" aria-valuemax=' + vita*10 + ' style="width:'+percentage+'%">' + hp + '</div></div>' + '</div>')
@@ -320,8 +367,8 @@ function Army() {
 
         for (i = 0; i < tier; i++) {
             this.ennemyArmy[i] = {
-                life: Math.floor(Math.random() * (level * 10) + level * 10 + 20)
-                , attack: Math.floor(Math.random() * (level) + level + 3)
+                life: this.getHp(map.data.level, level)
+                , attack: this.getAtk(map.data.level, level)
             }
             this.ennemyArmy[i].hp = this.ennemyArmy[i].life;
             var life = this.ennemyArmy[i].life;
@@ -330,14 +377,32 @@ function Army() {
         }
 
     }
+    this.getHp = function(i,j) {
+        var hp
+        hp = Math.random() * (j * 10) + j * 10 + 20 + //Varie en fonction des lv Donger
+            (Math.random()-0.5)*2*25*Math.pow(1.25, i) + // +/-
+            (100*Math.pow(1.6, i)-100) +//Varie en fonction des lv Map
+            (i*j*Math.pow(1.5,i)) + //Varie en fonction de lvMap * lvDonger
+            (200/(i+1)*i)
+        hp = Math.round(hp)
+        return hp
+    }
+    this.getAtk = function(i,j) {
+        var atk        
+        atk = Math.floor(Math.random() * j + j + 3) +
+            (Math.random()-0.5)*2*2.5*Math.pow(1.25, i) + // +/-
+            (10*Math.pow(1.6, i)-10) +//Varie en fonction des lv Map
+            (i*j*Math.pow(1.1,i)) + //Varie en fonction de lvMap * lvDonger
+            (20/(i+1)*i)
+        atk = Math.round(atk)
+        return atk
+    }
 
     this.regeneration = function(active=true) {
 
         if (active == false) {
             clearInterval(army.IDregeneration);
-            console.log('regeneration stop')
         } else {
-            console.log('regeneration start')
             army.IDregeneration = setInterval(function () {       
 
                 for (var i=0; i<army.level; i++){
@@ -364,9 +429,29 @@ function Map() {
         height: 0,
         row: [],
         mound: {},
-        ennemyMound: {}
+        ennemyMound: {},
+        level: 0
 
     }
+    this.map = [
+        [8,8],
+        [11,6],
+        [9,9],
+        [17,5],
+        [5,4],
+        [17,6],
+        [10,10],
+        [11,9],
+        [4,5],
+        [12,10],
+        [8,8],
+        [9,7],
+        [7,10],
+        [8,9],
+        [11,11],
+        [6,9],
+        [8,7]
+    ]
 
     this.self = this
 
@@ -380,6 +465,7 @@ function Map() {
             this.addLevel()
 
             this.data.empty = false
+            saveGame()
 
         } else {
             this.linkJQuery()
@@ -409,6 +495,7 @@ function Map() {
                 this.data.row[i][j].tile.attr('onclick', "alerter(this)").css('background-color', '#fff')
             }
         }
+        //        this.data.ennemyMound = this.transformCoord(this.data.ennemyMound.coord)
     }
     this.placeMound = function () {
         var x = Math.floor(Math.random() * this.data.width)
@@ -424,6 +511,7 @@ function Map() {
 
         this.data.ennemyMound = this.data.row[y][x]
         this.data.ennemyMound.state = "ennemyMound"
+        this.transformCoord(this.data.ennemyMound.coord).level += 2
     }
     this.distanceToMound = function (y, x) {
         var mY = this.data.mound.coord[0]
@@ -435,12 +523,11 @@ function Map() {
         return deltaX + deltaY
     }
     this.createEnnemyMoundCoord = function (distance) {
-        var minDist = Math.floor(this.data.width / 2 + this.data.height / 2 - 1);
+        var minDist = Math.floor(this.data.width / 2 + this.data.height / 2);
         if (typeof distance != 'undefined') {
             minDist = distance;
         }
 
-        console.log('minDist : ' + minDist);
         var x, y, dist
 
         do {
@@ -452,6 +539,19 @@ function Map() {
         } while (dist < minDist)
             return [x, y]
             }
+    this.update = function() {
+
+        $('#map-level').text('Niveau ' + (this.data.level+1))
+
+        if ( this.data.ennemyMound.coord !== undefined) {
+            if ( this.transformCoord(this.data.ennemyMound.coord).state == "clear" || this.transformCoord(this.data.ennemyMound.coord).state == "clearedEnnemyMound" ) 
+            {
+                this.addButton()
+            }
+        }
+
+
+    }
 
     this.transformCoord = function (array) {
         var result;
@@ -465,34 +565,66 @@ function Map() {
 
                 var emplacement = this.data.row[i][j];
 
+                if (emplacement.state == "ennemyMound") {
+                    map.color(emplacement)
+                    emplacement.tile.empty().append('<span class="glyphicon glyphicon-exclamation-sign"></span>')
+                }
+
                 if(emplacement.state == "mound" || emplacement.state == "clear") {
 
                     this.color(emplacement);
                     if (emplacement.state == "mound") {
                         emplacement.tile.empty().append('<span class="glyphicon glyphicon-star" aria-hidden="true"></span>')
                     }
-
                     this.applyToSiblings(emplacement, function(a) {
                         if ( a.state != "ennemyMound" && a.state != "clickableEnnemyMound" && a.state != "mound" && a.state != "clear") {
                             a.state = "clickable"
                             map.color(a)
                             a.tile.text(a.level)
                         } else if (a.state == "ennemyMound" || a.state == "clickableEnnemyMound" ) {
+                            map.color(a)
                             a.state = "clickableEnnemyMound"
-                            a.tile.empty().append('<span class="glyphicons glyphicons-tint"></span>')
+                            a.tile.empty().append('<span class="glyphicon glyphicon-exclamation-sign"></span>')
                         } else if (a.state == "clear") {
-                            a.tile.text(a.level)
+                            a.tile.text("")
                         }
                     })
                 }
             }
         }
+        updateTooltip()
     }
     this.changeState = function(array, state){
         var i = array[0];
         var j = array[1];
         this.data.row[i][j].state = state;
     }
+    this.addButton = function(){
+        $('#map-upgrade').attr('aria-disabled', false).toggleClass('disabled', false)
+    }
+    this.levelUp = function(){
+        if ($('#map-upgrade').attr('aria-disabled') == "false" ) {
+            if (confirm("Si vous acceptez, le niveau de la carte va être augmenté et vous ne pourrez plus accéder à la carte actuelle")) {
+                var level = map.data.level + 1
+                map.data = {
+
+                    empty: true,
+                    width: 0,
+                    height: 0,
+                    row: [],
+                    mound: {},
+                    ennemyMound: {},
+                    level:level
+
+                }
+
+                $('#map-upgrade').attr('aria-disabled', "true").toggleClass('disabled', true)
+                $('#map-level').text('Niveau' + (this.data.level+1))
+                createTable();
+            }
+        }
+    }
+
 
     // Applique une fonction a tous les voisins directs
     // ' a ' est la variable qui contient la case centrale
@@ -557,8 +689,7 @@ function Map() {
 }
 
 function initGame() {
-    score = 10000;
-    //    score = 0;
+    score = 0;
     generation = 0;
 
     queenBar = 0;
@@ -599,6 +730,7 @@ function initGame() {
     usineStockEau = 0;
     usineStockTerre = 0;
 
+    startTimer()
     updateData();
 }
 
@@ -613,14 +745,19 @@ function checkPage() {
 
 /* ########## TIMER ########## */
 
-var lastUpdate = new Date().getTime();
-setInterval(function () {
-    var thisUpdate = new Date().getTime();
-    var diff = (thisUpdate - lastUpdate);
-    diff = Math.round(diff / 100);
-    updateGame(diff);
-    lastUpdate = thisUpdate;
-}, 100);
+function startTimer() {
+    clearInterval(timer)
+
+    var lastUpdate = new Date().getTime();
+
+    timer = setInterval(function () {
+        var thisUpdate = new Date().getTime();
+        var diff = (thisUpdate - lastUpdate);
+        diff = Math.round(diff / 100);
+        updateGame(diff);
+        lastUpdate = thisUpdate;
+    }, 100*gameSpeed);
+}
 
 var autoSave = new Date().getTime();
 setInterval(function () {
@@ -663,6 +800,9 @@ function saveGame() {
         , armyLevel: army.level
 
         , mapData: map.data
+
+        , adminMode: admin
+        , gameSpeed: gameSpeed
 
     }
 
@@ -708,11 +848,16 @@ function loadGame() {
 
     if (typeof savegame.mapData !== "undefined") map.data = savegame.mapData
 
+    if (typeof savegame.adminMode !== "undefined") admin = savegame.adminMode
+    if (typeof savegame.gameSpeed !== "undefined") gameSpeed = savegame.gameSpeed
+
     updateData();
     updateUpgrade();
     army.update();
     army.regeneration();
-    createTable(8, 8);
+    $(document).ready(function () {
+        createTable();
+    })
 }
 
 function deleteGame() {
@@ -721,6 +866,14 @@ function deleteGame() {
     updateData();
     updateUpgrade();
     army.update();
+    location.reload()
+}
+
+function setAdmin() {
+    admin = true
+    score =+ 10000
+//    gameSpeed = 0.01    
+    startTimer()
 }
 
 //Lier aux boutons
@@ -731,6 +884,17 @@ $(document).ready(function () {
 });
 
 
+
+/* ########## AFFICHAGE ########## */
+
+function infoPop(message) {
+
+    $('.infoPop').empty().append(message).fadeIn("fast").delay(1000).fadeOut('slow');
+
+}
+function log(obj="test") {
+    console.log(obj)
+}
 
 
 /* ########## CREER UN CRITTER ########## */
@@ -779,6 +943,7 @@ function createChild() {
     score = Math.round(score * 10) / 10;
 
     var child = {
+
         vita: vita
         , hp: vita*10
         , force: force
@@ -786,6 +951,7 @@ function createChild() {
         , morsure: morsure
         , piqure: piqure
         , score: score
+
     };
 
     var random = Math.round(Math.random());
@@ -812,6 +978,15 @@ function createChild() {
 
         updateKingChild();
     } //KING
+
+    if ( admin == true ) {
+        if(kingChild[0].score > king.score) {
+            setKing()
+        }
+        if(queenChild[0].score > queen.score) {
+            setQueen()
+        }
+    }
 }
 
 
@@ -825,13 +1000,14 @@ function setKing() {
         kingChild.shift();
         kingBar = 0;
         generation++;
-        updateData();
+        updateKing();
+        updateKingChild()
     }
 }
 
 function deleteKingChild() {
     kingChild.shift();
-    updateData();
+    updateKingChild();
 }
 
 function setQueen() {
@@ -840,13 +1016,14 @@ function setQueen() {
         queenChild.shift();
         queenBar = 0;
         generation++;
-        updateData();
+        updateQueen();
+        updateQueenChild()
     }
 }
 
 function deleteQueenChild() {
     queenChild.shift();
-    updateData();
+    updateQueenChild();
 }
 
 //Lier aux boutons
@@ -856,7 +1033,6 @@ $(document).ready(function () {
     $('.supprimer-critter-queen').click(function (e) {
         if (e.shiftKey == true) {
             queenChild = [];
-            updateData;
         } else {
             deleteQueenChild();
         }
@@ -864,7 +1040,6 @@ $(document).ready(function () {
     $('.supprimer-critter-king').click(function (e) {
         if (e.shiftKey == true) {
             kingChild = [];
-            updateData;
         } else {
             deleteKingChild();
         }
@@ -923,14 +1098,13 @@ function nextFreePlace(parent, child) {
 /* ########## BOOST ET UPGRADE ########## */
 
 function boosting() {
-    if (boost > 1) {
+    if (boost >= 1) {
         synchroBar[0] = true;
         synchroBar[1] = true;
         finishBar(false);
-        //                boost--;
+        if (admin == false) boost--
         boost = Math.round(boost * 10) / 10;
         updateBoost();
-        updateData();
     }
 }
 
@@ -939,7 +1113,6 @@ function upgrading() {
         score -= nextScore();
         upgrade++;
         updateUpgrade();
-        updateData();
     }
 }
 
@@ -994,7 +1167,9 @@ function updateKingBar(value) {
     if (value < 100) {
         kingBar++;
         value++;
-        $('.king-progress').css('width', value + '%').attr('aria-valuenow', value);
+        if ( admin == false) {
+            $('.king-progress').css('width', value + '%').attr('aria-valuenow', value);
+        }
     } else {
         synchroBar[0] = true;
         finishBar();
@@ -1005,7 +1180,9 @@ function updateQueenBar(value) {
     if (value < 100) {
         queenBar++;
         value++;
-        $('.queen-progress').css('width', value + '%').attr('aria-valuenow', value);
+        if ( admin == false ) {
+            $('.queen-progress').css('width', value + '%').attr('aria-valuenow', value);
+        }
     } else {
         synchroBar[1] = true;
         finishBar();
@@ -1023,6 +1200,7 @@ function finishBar(bool) {
         {
             boost += 0.1;
             boost = Math.round(boost * 10) / 10;
+            updateBoost()
         }
     }
 }
@@ -1030,20 +1208,28 @@ function finishBar(bool) {
 function updateData() {
     $(document).ready(function () {
 
-        score = Math.round(score * 10) / 10;
-        $('.score').text("Score : " + score);
-        $('.generation').text("Génération : " + generation);
-
+        updateScore()
         updateKing();
         updateQueen();
         updateKingChild();
         updateQueenChild();
         updateUsine();
+        map.update()
 
         updateBoost();
     });
 
 } // GERE LE SCORE ET LES GENERATIONS + AFFICHAGE GLOBAL
+
+function updateScore() {
+    score = fixNumber(score);
+    if ($('.score').text() != "Score : " + score ) {
+        $('.score').text("Score : " + score);
+    }
+    if ($('.generation').text() != "Génération : " + generation ) {
+        $('.generation').text("Génération : " + generation);
+    }
+}
 
 function updateKing() {
     var king = critterKing;
@@ -1230,71 +1416,17 @@ $(document).ready(function () {
 
 /* ############ DEFINITION DES FONCTIONS ############# */
 
-function setWorker(critter) {
-    console.log(typeof critter)
-    if (typeof critter !== "undefined") {
-        findEmptyPlace(critter);
-        updateData();
-    }
-}
-
-function setAllWorker(critter) {
-    if (typeof critter !== "undefined") {
-        setWorker(critter);
-
-        if (typeof critter.king == "object") setAllWorker(kingChild[0]);
-        if (typeof critter.queen == "object") setAllWorker(queenChild[0]);
-    }
-}
-
-function findEmptyPlace(critter) {
-    var usineTempo = findBestStat(critter);
-    var critterTempo = critter;
-    console.log("UsineTempo stat : " + usineTempo.stat);
-    if (usineTempo.findPlace(critterTempo) != -1) {
-        usineTempo.replaceWorker(usineTempo.findPlace(critterTempo), critter)
-    } else if (critter[usineTempo.stat] != 0) {
-        var critterDebuff = critterTempo;
-        critterDebuff[usineTempo.stat] = 0;
-        findEmptyPlace(critterDebuff);
-    }
-}
-
-function findBestStat(critter) {
-    var a, b;
-
-    a = critter.agi;
-    b = usineEau;
-
-    if (a < critter.force) {
-        a = critter.force;
-        b = usineTerre;
-    }
-    if (a < critter.piqure) {
-        a = critter.piqure;
-        b = usineTransportEau;
-    }
-    if (a < critter.morsure) {
-        a = critter.morsure;
-        b = usineTransportTerre;
-    }
-
-    return b;
-}
-
-
 function setWorker2(critter) {
     var found = false
     if (typeof critter !== "undefined") {
         found = findEmptyPlace2(critter)
 
         if (found == false) {
-            found = findBestPlace(critter)
+            found = findBestPlace2(critter)
 
             if (found == false) {
                 if (typeof critter.king == "object") deleteKingChild()
                 if (typeof critter.queen == "object") deleteQueenChild();
-
             }
         }
     }
@@ -1349,149 +1481,256 @@ function findBestPlace(critter) {
     return false
 }
 
-
-var stockUpdate = new Date().getTime();
-setInterval(function () {
-    var thisUpdate = new Date().getTime();
-    var diff = (thisUpdate - stockUpdate);
-    diff = Math.round(diff / 100);
-    updateStock(diff);
-    updateCreation(diff);
-    updateData();
-    stockUpdate = thisUpdate;
-}, 1000);
-
-function updateStock() {
-    usineStockTerre += usineTerre.productionNum;
-    usineStockEau += usineEau.productionNum;
-
-    usineStockTerre = Math.floor(usineStockTerre * 10) / 10;
-    usineStockEau = Math.floor(usineStockEau * 10) / 10;
-
-    var prodSecond = (usineTransportEau > usineTransportTerre) ? usineTransportTerre : usineTransportEau;
-    prodSecond = Math.round(prodSecond.productionNum * 10) / 10;
-
-    $('#stock-terre>p:last-child').text(usineStockTerre + " (" + Math.round((usineTerre.productionNum - prodSecond) * 10) / 10 + " /s)");
-    $('#stock-eau>p:last-child').text(usineStockEau + " (" + Math.round((usineEau.productionNum - prodSecond) * 10) / 10 + " /s)");
-}
-
-function updateCreation() {
-    var lowerStat = (usineTransportEau > usineTransportTerre) ? usineTransportTerre : usineTransportEau;
-
-    var value = Math.round(lowerStat.productionNum * 10) / 10;
-    if (usineStockEau > value && usineStockTerre > value) {
-        usineStockEau -= value;
-        usineStockTerre -= value;
-
-        score += value;
-    }
-    $('#creation>p:last-child').text(value + " / s");
-}
+function findBestPlace2(critter) {
+    var tempo = usineCursor
+    var found = false
+    var usine, i, tour=0
+    do {
+        tour++
+        switch ( usineCursor[0] ) {
+            case 0 :
+                usine = usineTerre;
+                break;
+            case 1 :
+                usine = usineEau;
+                break;
+            case 2 :
+                usine = usineTransportTerre;
+                break;
+            case 3 :
+                usine = usineTransportEau;
+                break;            
+        }
+        log(usine.type)
+        found = usine.checkBetter(critter)
+    } while ( found == false || usineCursor != tempo || tour < 20)
+        }
 
 
-/* ################ PARTIE ARMY ################## */
+        var stockUpdate = new Date().getTime();
+    setInterval(function () {
+        var thisUpdate = new Date().getTime();
+        var diff = (thisUpdate - stockUpdate);
+        diff = Math.round(diff / 100);
+        updateStock(diff);
+        updateScore()
+        stockUpdate = thisUpdate;
+    }, 1000);
 
-/* ############ RELIER LES BOUTONS ############# */
-$(document).ready(function () {
-    $('.soldier-king').click(function (e) {
-        if (e.shiftKey == true) {
-            setAllSoldier(kingChild[0]);
+    function updateStock() {
+
+        //Augmente le stock d'eau et terre    
+        usineStockTerre += usineTerre.getProduction();
+        usineStockEau += usineEau.getProduction();
+
+
+        //Actualise le stock et le rend joli
+        usineStockTerre = fixNumber(usineStockTerre);
+        usineStockEau = fixNumber(usineStockEau);
+
+
+        //Calcul du transport minimum
+        var minTransport = fixNumber( Math.min(usineTransportEau.getProduction(), usineTransportTerre.getProduction()))
+
+        //Calcul le minimum entre transport et recolte
+        terre = usineTerre.getProduction() - minTransport
+        eau = usineEau.getProduction() - minTransport
+
+        //Augmentation du score si il y a assez de ressources
+        if (usineStockEau >= minTransport && usineStockTerre >= minTransport) {
+
+            usineStockEau -= minTransport;
+            usineStockTerre -= minTransport;
+
+            score += minTransport;
+        }
+
+        //Affichage
+        if ( usineStockEau > minTransport && usineStockTerre > minTransport ) {    
+            $('#stock-terre>p:last-child').text(fixNumber(usineStockTerre) + " (" + fixNumber(terre) + " /s)");
+            $('#stock-eau>p:last-child').text(fixNumber(usineStockEau) + " (" + fixNumber(eau) + " /s)");
+
+            if ( $('#creation>p:last-child').text() != fixNumber(minTransport) + " / s" ) {
+                $('#creation>p:last-child').text(fixNumber(minTransport) + " / s");
+            }
+
         } else {
-            setSoldier(kingChild[0]);
+
+            var min = fixNumber( Math.min(usineEau.getProduction(), usineTerre.getProduction()))
+
+            $('#stock-terre>p:last-child').text(fixNumber(usineStockTerre) + " (" + fixNumber(usineTerre.getProduction() - min) + " /s)");
+            $('#stock-eau>p:last-child').text(fixNumber(usineStockEau) + " (" + fixNumber(usineEau.getProduction() - min) + " /s)");
+
+            if ( $('#creation>p:last-child').text() != fixNumber(minTransport) + " / s" ) {    
+
+                $('#creation>p:last-child').text(fixNumber(min) + " / s");
+            }
+
         }
+    }
+
+
+    /* ################ PARTIE ARMY ################## */
+
+    /* ############ RELIER LES BOUTONS ############# */
+    $(document).ready(function () {
+        $('.soldier-king').click(function (e) {
+            if (army.currentBattle == false) {
+                if (e.shiftKey == true) {
+                    setAllSoldier(kingChild[0]);
+                } else {
+                    setSoldier(kingChild[0]);
+                }
+            }
+        });
+        $('.soldier-queen').click(function (e) {
+            if (army.currentBattle == false) {
+                if (e.shiftKey == true) {
+                    setAllSoldier(queenChild[0]);
+                } else {
+                    setSoldier(queenChild[0]);
+                }
+            }
+        });
+
+        $('#army-upgrade').click(function () {
+            army.upgrade()
+        })
     });
-    $('.soldier-queen').click(function (e) {
-        if (e.shiftKey == true) {
-            setAllSoldier(queenChild[0]);
+
+    /* ############ DEFINITION DES FONCTIONS ############# */
+    function setSoldier(critter) {
+        if (typeof critter !== "undefined") {
+            var place = army.findPlace(critter)
+            army.replaceSoldier(place, critter)
+            updateData()
+        }
+    }
+    function setAllSoldier(critter) {
+        if (typeof critter !== "undefined") {
+            setSoldier(critter);
+
+            if (typeof critter.king == "object") setAllSoldier(kingChild[0]);
+            if (typeof critter.queen == "object") setAllSoldier(queenChild[0]);
+        }
+    }
+    function createTable() {
+
+        var width, height;
+
+        width = map.map[map.data.level][0]
+        height = map.map[map.data.level][1]
+
+        if (map.data.empty == false) {
+            width = map.data.width
+            height = map.data.height
+        }
+
+        $('#create-table').empty()
+        var table = "";
+        for (i = 0; i < height; i++) {
+            var row = '<tr id="row' + i + '" class="">'
+            for (j = 0; j < width; j++) {
+                var col = '<td id="col' + j + '" class=""><p></p></td>'
+                row += col;
+            }
+            row += '</tr>'
+            table += row
+        }
+        $('#create-table').append(table)
+
+        map.data.height = height
+        map.data.width = width
+        map.init()
+    }
+
+
+    function testNumber() {
+        var i,j,hp,atk
+        for (i=0; i < 10; i++) {
+            log("tier "+i)
+            for (j=1; j<10 ; j++) {
+                hp = Math.random() * (j * 10) + j * 10 + 20 + //Varie en fonction des lv Donger
+                    (Math.random()-0.5)*2*25*Math.pow(1.25, i) + // +/-
+                    (100*Math.pow(1.6, i)-100) +//Varie en fonction des lv Map
+                    (i*j*Math.pow(1.5,i)) + //Varie en fonction de lvMap * lvDonger
+                    (200/(i+1)*i)
+                hp = Math.round(hp)
+
+                atk = Math.floor(Math.random() * j + j + 3) +
+                    (Math.random()-0.5)*2*2.5*Math.pow(1.25, i) + // +/-
+                    (10*Math.pow(1.6, i)-10) +//Varie en fonction des lv Map
+                    (i*j*Math.pow(1.1,i)) + //Varie en fonction de lvMap * lvDonger
+                    (20/(i+1)*i)
+                atk = Math.round(atk)
+                log("hp : "+hp+" atk : "+atk)
+            }        
+        }
+    }
+    function testCritter() {
+        var i, random, adding, c
+
+        for ( var i = 0; i < 500; i++) {
+
+            c = i
+
+            // AJOUTE OU RETIRE LA VALEUR
+            random = Math.random() - 0.5;
+            if (random < -0.2) random = -1;
+            if (random > 0.2) random = 1;
+            if (random >= -0.2 && random <= 0.2) random = 0;
+
+            // VALEUR A AJOUTER OU RETIRER
+            adding = Math.random() * (c / 25);  
+            adding = Math.ceil(adding);
+            adding = adding * random;
+            if (adding != 0 && i%4 == 0) {
+                log(i+" : "+adding)
+            }
+
+        }
+    }
+
+
+    function fixNumber(a) {
+        return Math.round(a * 10) / 10
+    }
+    function alerter(e) {
+        var col = $(e).attr('id').slice(3)
+        var row = $(e.parentElement).attr('id').slice(3)
+
+        var clickedObject = map.data.row[row][col]
+
+        army.triggerBattle(clickedObject)
+    }
+    function greenYellowRed(number, max) {
+        number--
+        max = max / 2
+        var r, g, b;
+        if (number < max) {
+            r = Math.floor(255 * (number / max))
+            g = 255;
         } else {
-            setSoldier(queenChild[0]);
+            r = 255;
+            g = Math.floor(255 * ((max - number % max) / max))
         }
+        b = 0
+        return r + "," + g + "," + b;
+    }
+    function getRandomIntInclusive(min, max){
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min +1)) + min;
+    }
+    // #######################
+    // # APPEL DES FONCTIONS #
+    // #######################
+
+    initGame();
+    checkPage();
+    $(document).ready(function () {
+        setTimeout(function () {
+            army.update();
+            updateUpgrade();
+        }, 100);
     });
-
-    $('#army-upgrade').click(function () {
-        army.upgrade()
-    })
-});
-
-/* ############ DEFINITION DES FONCTIONS ############# */
-function setSoldier(critter) {
-    if (typeof critter !== "undefined") {
-        var place = army.findPlace(critter)
-        army.replaceSoldier(place, critter)
-        updateData()
-    }
-}
-
-function setAllSoldier(critter) {
-    if (typeof critter !== "undefined") {
-        setSoldier(critter);
-
-        if (typeof critter.king == "object") setAllSoldier(kingChild[0]);
-        if (typeof critter.queen == "object") setAllSoldier(queenChild[0]);
-    }
-}
-
-function createTable(width, height) {
-
-    if (map.data.empty == false) {
-        width = map.data.width
-        height = map.data.height
-    }
-
-    $('#create-table').empty()
-    var table = "";
-    for (i = 0; i < height; i++) {
-        var row = '<tr id="row' + i + '" class="">'
-        for (j = 0; j < width; j++) {
-            var col = '<td id="col' + j + '" class=""><p></p></td>'
-            row += col;
-        }
-        row += '</tr>'
-        table += row
-    }
-    $('#create-table').append(table)
-
-    map.data.height = height
-    map.data.width = width
-    map.init()
-}
-
-function alerter(e) {
-    var col = $(e).attr('id').slice(3)
-    var row = $(e.parentElement).attr('id').slice(3)
-
-    var clickedObject = map.data.row[row][col]
-
-    army.triggerBattle(clickedObject)
-}
-function greenYellowRed(number, max) {
-    number--
-    max = max / 2
-    var r, g, b;
-    if (number < max) {
-        r = Math.floor(255 * (number / max))
-        g = 255;
-    } else {
-        r = 255;
-        g = Math.floor(255 * ((max - number % max) / max))
-    }
-    b = 0
-    return r + "," + g + "," + b;
-}
-function getRandomIntInclusive(min, max){
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min +1)) + min;
-}
-// #######################
-// # APPEL DES FONCTIONS #
-// #######################
-
-initGame();
-checkPage();
-$(document).ready(function () {
-    setTimeout(function () {
-        army.update();
-        updateUpgrade();
-    }, 100);
-});

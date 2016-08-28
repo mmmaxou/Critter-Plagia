@@ -31,7 +31,7 @@
 
         <div class="container-fluid mainbar">
             <ul class="nav nav-pills nav-justified">
-                <li class="active"><a data-toggle="pill" href="#home">Couvoir Royal</a></li>
+                <li class="active"><a data-toggle="pill" href="#home">Salle aux Dongers</a></li>
                 <li><a data-toggle="pill" href="#usine">Usine</a></li>
                 <li><a data-toggle="pill" href="#army">Armée</a></li>
             </ul>
@@ -78,24 +78,27 @@
 
             <div id="home" class="tab-pane fade-in active">
                 <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-10 col-sm-offset-1 col-xs-12 jumbotron text-center">
+                            <p>La salle aux dongers permet de developper les capacités de tes Dongers.</p>
+                            <p>Les enfants ont des caractéristiques qui dépendent du Roi et de la Reine.</p>
+                            <p>Selectionne les Dongers qui ont les meilleures capacités pour devenir Roi ou Reine et ainsi augmenter la puissance de la lignée.</p>
+                        </div>
+                    </div>
                     <div class="wrapper-queen">
                         <div class="container col-lg-6 col-xs-12 well well-lg queen">
                             <div class="row">
-                                <h1 id="a">Reine</h1>
+                                <h1>Reine</h1>
                             </div>
-                            <div class="row">
-                                <div class="col-xs-6 col-xs-offset-0 col-sm-2 col-sm-offset-8">
-                                    <button type="button" class="btn btn-info   boost">Boost 9/10</button>
-                                </div>
-                                <div class="col-xs-6 col-sm-2">
-                                    <button type="button" class="btn btn-info   upgrade">Upgrade</button>
-                                </div>
+                            <div class="row text-center">
+                                <button type="button" class="btn btn-info boost">Boost 9/10</button>
+                                <button type="button" class="btn btn-info upgrade">Upgrade</button>
                             </div>
                             <br/>
                             <div class="row">
                                 <div class="table-responsive">
                                     <table class="table table-bordered">
-                                        <thead>
+                                        <thead class="stats">
                                             <tr>
                                                 <th>Score</th>
                                                 <th>Vitalité</th>
@@ -135,7 +138,7 @@
                             <div class="row">
                                 <div class="table-responsive">
                                     <table class="table table-bordered">
-                                        <thead>
+                                        <thead class="stats">
                                             <tr>
                                                 <th>Score</th>
                                                 <th>Vitalité</th>
@@ -160,19 +163,15 @@
                             <div class="row">
                                 <h1>Roi</h1>
                             </div>
-                            <div class="row">
-                                <div class="col-xs-6 col-xs-offset-0 col-sm-2 col-sm-offset-8">
-                                    <button type="button" class="btn btn-info boost">Boost 9/10</button>
-                                </div>
-                                <div class="col-xs-6 col-sm-2">
-                                    <button type="button" class="btn btn-info upgrade">Upgrade</button>
-                                </div>
+                            <div class="row text-center">
+                                <button type="button" class="btn btn-info boost">Boost 9/10</button>
+                                <button type="button" class="btn btn-info upgrade">Upgrade</button>
                             </div>
                             <br/>
                             <div class="row">
                                 <div class="table-responsive">
                                     <table class="table table-bordered">
-                                        <thead>
+                                        <thead class="stats">
                                             <tr>
                                                 <th>Score</th>
                                                 <th>Vitalité</th>
@@ -212,7 +211,7 @@
                             <div class="row">
                                 <div class="table-responsive">
                                     <table class="table table-bordered">
-                                        <thead>
+                                        <thead class="stats">
                                             <tr>
                                                 <th>Score</th>
                                                 <th>Vitalité</th>
@@ -240,6 +239,14 @@
 
             <div id="usine" class="tab-pane fade-in">
                 <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-10 col-sm-offset-1 col-xs-12 jumbotron text-center">
+                            <p>L'usine te permet de créer de la boue afin d'augmenter ton score.</p>
+                            <p>La force permet de recolter de la terre et l'Agilité permet de recolter de l'eau.</p>
+                            <p>Les ouvriers combinent l'eau et la terre pour augmenter ton score.</p>
+                            <p>Plus les Dongers qui travaillent dans l'usine sont puissants, et plus ta production sera rapide.</p>
+                        </div>
+                    </div>
                     <div class="row">
                         <div id="wrapper-terre">
                             <div class="container col-md-6 col-xs-12 well well-lg terre">
@@ -293,7 +300,7 @@
                             <div class="container col-md-6 col-xs-12 well well-lg transportTerre">
                                 <div class="row text-center">
                                     <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
-                                        <h1>Transport Terre</h1>
+                                        <h1>Ouvrier Terre</h1>
                                     </div>
                                     <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
                                         <button class="btn btn-info btn-block" id="upgradetransportTerre">Upgrade</button>
@@ -316,7 +323,7 @@
                             <div class="container col-md-6 col-xs-12 well well-lg transportEau">
                                 <div class="row text-center">
                                     <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
-                                        <h1>Transport Eau</h1>
+                                        <h1>Ouvrier Eau</h1>
                                     </div>
                                     <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
                                         <button class="btn btn-info btn-block" id="upgradetransportEau">Upgrade</button>
@@ -358,17 +365,21 @@
 
             <div id="army" class="tab-pane fade-in">
                 <div class="container-fluid" id="map">
+                    <div class="col-sm-10 col-sm-offset-1 col-xs-12 jumbotron text-center">
+                        <p>Developpe ton armée pour conquérir le royaume Donger.</p>
+                        <p>Augmente le niveau pour augmenter la taille de ton armée.</p>
+                    </div>
                     <div class="wrapper-army">
                         <div class="container col-lg-6 col-xs-12 well well-lg army">
                             <div class="row text-center">
                                 <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
                                     <h1>Armée</h1>
                                 </div>
-                                <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
-                                    <button class="btn btn-info btn-block" id="army-upgrade">Upgrade</button>
+                                <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6">
+                                    <h2 id="army-level">Niveau 1</h2>
                                 </div>
                                 <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
-                                    <h2 id="army-level">Niveau 1</h2>
+                                    <button class="btn btn-info btn-block" id="army-upgrade">Upgrade</button>
                                 </div>
                             </div>
                             <br />
@@ -383,8 +394,11 @@
                                 <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
                                     <h1>Guerre</h1>
                                 </div>
-                                <div class="col-lg-6 col-sm-6 col-xs-12 col-md-12">
-                                    <h2>Contre les Criquets</h2>
+                                <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
+                                    <h2 id="army-level">Niveau 1</h2>
+                                </div>
+                                <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton disabled">
+                                    <button class="btn btn-info btn-block disabled" id="map-upgrade" aria-disabled="true" onclick="map.levelUp()">Continuer</button>
                                 </div>
                             </div>
                             <br/>
@@ -437,8 +451,14 @@
                 <div class="col-xs-offset-3 col-xs-6 col-md-offset-4 col-md-4 well savePop">
                     <p>Game Saved</p>
                 </div>
+                <div class="col-xs-offset-3 col-xs-6 col-md-offset-4 col-md-4 well infoPop" style="display:none;">
+                    <p></p>
+                </div>
             </div>
         </div>
+
+        <!-- INFO BAR -->
+
 
 
         <script type="text/javascript" src="script/jquery.qtip.js"></script>
