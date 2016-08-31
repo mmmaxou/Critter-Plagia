@@ -13,7 +13,9 @@ body {
     margin: 0px;
 }
 
-
+.hidden{
+    display: none;
+}
 /*  HEADER */
 
 .mainbar {
@@ -138,6 +140,11 @@ th {
     font-weight: bold;
 }
 
+.mutation {
+    font-weight: normal;
+}
+
+
 /* USINE */
 
 #usine button,
@@ -228,5 +235,11 @@ th {
 /* QTIP */
 
 .custom-qtip {
-    max-width: 30vw;
+    width: 30vw !important;
+    text-transform: capitalize;
+}
+.custom-qtip h2{
+	margin: 5px auto;
+    padding: 0;
+    border: none;
 }

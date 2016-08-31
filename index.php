@@ -76,6 +76,7 @@
 
             <!--            ##### PARTIE PRINCIPALE #####-->
 
+
             <div id="home" class="tab-pane fade-in active">
                 <div class="container-fluid">
                     <div class="row">
@@ -84,6 +85,7 @@
                             <p>Les enfants ont des caractéristiques qui dépendent du Roi et de la Reine.</p>
                             <p>Selectionne les Dongers qui ont les meilleures capacités pour devenir Roi ou Reine et ainsi augmenter la puissance de la lignée.</p>
                         </div>
+
                     </div>
                     <div class="wrapper-queen">
                         <div class="container col-lg-6 col-xs-12 well well-lg queen">
@@ -129,10 +131,23 @@
                                 <h2>Enfants</h2>
                             </div>
                             <div class="row text-center">
-                                <button type="button" class="btn btn-info worker-queen" style="border:none">Ouvrier</button>
-                                <button type="button" class="btn btn-info promote-queen" style="border:none">Reine</button>
-                                <button type="button" class="btn btn-info supprimer-critter-queen" style="border:none">Supprimer</button>
-                                <button type="button" class="btn btn-info soldier-queen" style="border:none">Soldat</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info worker-queen" style="border:none">Ouvrier</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info promote-queen" style="border:none">Reine</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info supprimer-critter-queen" style="border:none">Supprimer</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info soldier-queen" style="border:none">Soldat</button>
+                                <div class="form-group col-xs-12 col-sm-2" id="tri1">
+                                    <select class="form-control">
+                                        <option>Score</option>
+                                        <option>Mutation</option>
+                                        <option>Vitalité</option>
+                                        <option>Force</option>
+                                        <option>Agilité</option>
+                                        <option>Morsure</option>
+                                        <option>Piqure</option>
+                                        <option>Base</option>
+                                        <option>Bonus</option>
+                                    </select>
+                                </div>
                             </div>
                             <br />
                             <div class="row">
@@ -202,10 +217,23 @@
                                 <h2>Enfants</h2>
                             </div>
                             <div class="row text-center">
-                                <button type="button" class="btn btn-info worker-king" style="border:none">Ouvrier</button>
-                                <button type="button" class="btn btn-info  promote-king" style="border:none">Roi</button>
-                                <button type="button" class="btn btn-info  supprimer-critter-king" style="border:none">Supprimer</button>
-                                <button type="button" class="btn btn-info soldier-king" style="border:none">Soldat</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info worker-king" style="border:none">Ouvrier</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info promote-king" style="border:none">Roi</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info supprimer-critter-king" style="border:none">Supprimer</button>
+                                <button type="button" class="col-xs-12 col-sm-2 btn btn-info soldier-king" style="border:none">Soldat</button>
+                                <div class="form-group col-xs-12 col-sm-2" id="tri2">
+                                    <select class="form-control">
+                                        <option>Score</option>
+                                        <option>Mutation</option>
+                                        <option>Vitalité</option>
+                                        <option>Force</option>
+                                        <option>Agilité</option>
+                                        <option>Morsure</option>
+                                        <option>Piqure</option>
+                                        <option>Base</option>
+                                        <option>Bonus</option>
+                                    </select>
+                                </div>
                             </div>
                             <br />
                             <div class="row">
@@ -424,11 +452,7 @@
                 </div>
             </div>
 
-
-
         </div>
-
-
 
 
 

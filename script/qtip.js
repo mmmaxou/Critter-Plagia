@@ -12,6 +12,16 @@ function updateTooltip() {
             at: 'top middle'
         }
     })
+    $('select').qtip({
+        content: {
+            text: "Permet de choisir la manière dont les enfants seront triés"
+        },
+        style: { classes: 'qtip-bootstrap qtip-red'},
+        position: {
+            my: 'bottom right',
+            at: 'top middle'
+        }
+    })
 
     $('.stats th:nth-child(1)').qtip({
         content: {
@@ -142,7 +152,7 @@ function updateTooltip() {
 
 $('.boost').qtip({
     content: {
-        text: "Crée un donger instantanément "+"Coute 1 boost"
+        text: "Crée un donger instantanément. Coute 1 boost"
     },
     style: {
         classes: 'qtip-bootstrap qtip-red custom-qtip',

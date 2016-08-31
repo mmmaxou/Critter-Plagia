@@ -33,7 +33,18 @@ var usineCursor = [0,0];
 var admin = false;
 var gameSpeed = 1;
 
-var timer
+var timer;
+
+var mapMutation;
+
+
+function Gene(id, stat, expression, name, value) {
+    this.id = id;
+    this.trait = stat;
+    this.expression = expression;
+    this.name = name;
+    this.value = value;
+}
 
 function Usine(type, stat) {
     this.type = type;
@@ -58,22 +69,31 @@ function Usine(type, stat) {
         }
         return -1;
     }
-    this.checkBetter = function ( critter ) {
-        log(usineCursor)
-        if ( this.workers[ usineCursor[1] ][this.stat] < critter[this.type] ) {
-            this.replaceWorker( critter )
-            log("replaced" + this.stat +" , "+ usineCursor[1])
+    this.checkBetter = function ( critter , tour) {
+        log(this.workers[ usineCursor[1] ] + "  " + critter[this.stat] )
+        var replaced = false
+
+        if ( this.workers[ usineCursor[1] ] < critter[this.stat] ) {
+
+            this.replaceWorker( usineCursor[1] , critter )
+            log("replaced : " + this.stat +" : "+ usineCursor[1] + " | tour : " + tour)
+            replaced = true
+
+        }
+
+        usineCursor[1]++;
+        if (usineCursor[1] >= (this.workers.length)) {
+            usineCursor[1] = 0
+            usineCursor[0]++
+            usineCursor[0] = usineCursor[0]%4
+        }
+
+        if (replaced) {
             return true
         } else {
-            log("not replaced")
-            usineCursor[1]++;
-            if (usineCursor[1] >= (this.workers.length-1)) {
-                usineCursor[1] = 0
-                usineCursor[0]++
-                usineCursor[0] = usineCursor[0]%4
-            }
             return false
         }
+
     }
     this.replaceWorker = function (place, critter) {
         this.workers[place] = critter[this.stat]
@@ -273,7 +293,9 @@ function Army() {
                         target = getRandomIntInclusive(0,army.ennemyArmy.length-1);
 
                         //                    Perte de vie sur la cible
-                        army.ennemyArmy[target].hp -= attack;
+                        if (typeof army.ennemyArmy[target] !== "undefined") {
+                            army.ennemyArmy[target].hp -= attack;
+                        }
 
                         if (army.ennemyArmy[target].hp <= 0) {
                             army.unitKilled('ennemy',target);
@@ -730,6 +752,16 @@ function initGame() {
     usineStockEau = 0;
     usineStockTerre = 0;
 
+
+    mapMutation = [
+        new Gene(001, "vita", "recessive", "Mutation 1", 0),
+        new Gene(101, "force", "recessive", "Mutation 2", 0),
+        new Gene(201, "agi", "recessive", "Mutation 3", 0),
+        new Gene(301, "morsure", "recessive", "Mutation 4", 0),
+        new Gene(401, "piqure", "recessive", "Mutation 5", 0),
+    ]
+
+
     startTimer()
     updateData();
 }
@@ -872,7 +904,7 @@ function deleteGame() {
 function setAdmin() {
     admin = true
     score =+ 10000
-//    gameSpeed = 0.01    
+    //    gameSpeed = 0.01    
     startTimer()
 }
 
@@ -884,7 +916,6 @@ $(document).ready(function () {
 });
 
 
-
 /* ########## AFFICHAGE ########## */
 
 function infoPop(message) {
@@ -892,7 +923,7 @@ function infoPop(message) {
     $('.infoPop').empty().append(message).fadeIn("fast").delay(1000).fadeOut('slow');
 
 }
-function log(obj="test") {
+function log(obj) {
     console.log(obj)
 }
 
@@ -900,8 +931,12 @@ function log(obj="test") {
 /* ########## CREER UN CRITTER ########## */
 
 function makeStat(a, b) {
+    /*
+    if (isNaN(a)) a = 1
+    if (isNaN(b)) b = 1
+*/
     // MOYENNE
-    var c;
+    var c, e;
 
     c = Math.ceil((a + b) / 2);
     e = (a + b) / 2;
@@ -922,8 +957,16 @@ function makeStat(a, b) {
     adding = Math.ceil(adding);
     adding = adding * random;
 
+    //BOOSTED AJOUT
+    var boost = critterBoost(c)
+
+    var diff = Math.abs(c-i)        
+    if (diff > i/25 && c >= 100) {
+        c = i + i/25
+    }
+
     //RETOUR
-    c = c + adding;
+    c = c + adding + boost;
     if (c < 1) c = 1;
 
     return c;
@@ -939,9 +982,6 @@ function createChild() {
     var morsure = makeStat(king.morsure, queen.morsure);
     var piqure = makeStat(king.piqure, queen.piqure);
 
-    var score = (vita + force + agi + morsure + piqure) / 5;
-    score = Math.round(score * 10) / 10;
-
     var child = {
 
         vita: vita
@@ -950,21 +990,46 @@ function createChild() {
         , agi: agi
         , morsure: morsure
         , piqure: piqure
-        , score: score
+        , score: 0
+
+        , vitaBase: vita
+        , forceBase: force
+        , agiBase: agi
+        , morsureBase: morsure
+        , piqureBase: piqure
+
+        , vitaBonus: 0
+        , forceBonus: 0
+        , agiBonus: 0
+        , morsureBonus: 0
+        , piqureBonus: 0
+
+        , mutation: []
+        , newMutation : false
 
     };
 
-    var random = Math.round(Math.random());
+    parentMutation(king, queen, child)
+    if ( randomTestOutOf100(50) ) {
+        critterMutation(child);
+    }
 
-    var i;
+    calculateTotalStat(child)
 
+    var i, random = Math.round(Math.random());
     if (random == 1) {
         child.queen = queen;
         child.queen.queen = null;
 
         i = nextFreePlace("queen", child);
         if (i != -1) queenChild[i] = child;
+        if (i == -1) {
 
+            queenChild.push(child)
+            sortChild("queen")
+            queenChild.pop()
+
+        }
         updateQueenChild();
 
     } //QUEEN
@@ -973,12 +1038,19 @@ function createChild() {
         child.king.king = null;
 
         i = nextFreePlace("king", child);
+        if (i != -1) kingChild[i] = child
+        if (i == -1) {
 
-        if (i != -1) kingChild[i] = child;
+            kingChild.push(child)
+            sortChild("king")
+            kingChild.pop()
+
+        }
 
         updateKingChild();
     } //KING
 
+    /*
     if ( admin == true ) {
         if(kingChild[0].score > king.score) {
             setKing()
@@ -987,10 +1059,140 @@ function createChild() {
             setQueen()
         }
     }
+    */
 }
 
+function critterBoost(value) {
+    var x = Math.ceil(Math.random()*100)
+    var boost = 0
+    if ( x==100 ) {
+        boost = value / 15
+        boost -= Math.pow(boost,1.15)/20
+        boost = Math.ceil(boost)
+        boost++
+    }
+    return (boost)
+}
+function critterMutation(child) {
 
+    var mutation = mapMutation[ Math.floor( Math.random()*(mapMutation.length) ) ]
 
+    if( child.mutation.some(function(item){return item.id == mutation.id}) == false ) {
+        child.mutation.push(mutation);
+        child.newMutation = true
+    } 
+
+}
+function parentMutation(king, queen, child) {
+
+    if ( king.mutation != undefined || king.mutation != undefined ) {
+        var i, gene = {}, proba = [], a, heritage
+
+        if ( king.mutation != undefined ) {
+            for ( i=0 ; i < king.mutation.length ; i++ ) {
+                if ( gene[king.mutation[i].id] == undefined ) {
+                    gene[king.mutation[i].id] = []
+                }
+                gene[king.mutation[i].id].push(king.mutation[i])
+            }
+        }
+
+        if ( queen.mutation != undefined ) {
+            for ( i=0 ; i < queen.mutation.length ; i++ ) {
+                if ( gene[queen.mutation[i].id] == undefined ) {
+                    gene[queen.mutation[i].id] = []
+                }
+                gene[queen.mutation[i].id].push(queen.mutation[i])
+            }
+        }
+
+        for (var mutation in gene) {
+            heritage = gene[mutation][0].expression
+            if (gene[mutation][1] != undefined) {
+                heritage = heritage + "," + gene[mutation][1].expression
+            }
+
+            a = getMutationProbabilityAndValue(mutation, heritage, gene[mutation])
+
+            proba.push(a)
+        }
+        //    log(gene)
+        //    log(proba)
+
+        for ( i=0 ; i<proba.length ; i++ ) {
+
+            if ( proba[i][1] != "none" ) {
+                child.mutation.push(mapMutation.find(function(a){
+                    return a.id == this[0]
+                },proba[i]))
+                child.mutation[child.mutation.length-1].expression = proba[i][1]
+                child.mutation[child.mutation.length-1].value = proba[i][2]
+                var trait = proba[i][3] + "Bonus"
+                child[trait] += proba[i][2]
+            }
+        }
+    }
+
+}
+function getMutationProbabilityAndValue(mutation, heritage, array){
+    var result = [mutation]
+
+    if ( heritage == "recessive" && randomTestOutOf100(25)) {
+        result.push("recessive")
+    }
+    else if ( heritage == "dominant" && randomTestOutOf100(50)) {
+        if (randomTestOutOf100(25)) result.push("recessive")
+        else result.push("dominant")
+            }
+    else if ( heritage == "recessive,recessive" && randomTestOutOf100(50)) {
+        if (randomTestOutOf100(50)) result.push("recessive")
+        else result.push("dominant")
+            }
+    else if ( heritage == "recessive,dominant" && randomTestOutOf100(75)) {
+        if (randomTestOutOf100(50)) result.push("recessive")
+        else result.push("dominant")
+            }
+    else if ( heritage == "dominant,recessive" && randomTestOutOf100(75)) {
+        if (randomTestOutOf100(50)) result.push("recessive")
+        else result.push("dominant")
+            }
+    else if ( heritage == "dominant,dominant") {result.push("dominant")}
+    else result.push("none")
+
+    if(result[1] == "dominant") {
+        var value1 =1
+        if ( array[1] != undefined ) {value1 = array[1].value}
+        
+        console.log("value1:"+value1)
+        
+        var c = makeStat( array[0].value, value1)
+        
+        console.log("c:"+c)
+        
+        result.push(c)
+        result.push(array[0].trait)
+    }
+
+    return result
+}
+
+function calculateTotalStat(child) {
+
+    child.vita = getValue(child.vitaBase, child.vitaBonus)
+    child.force = getValue(child.forceBase, child.forceBonus)
+    child.agi = getValue(child.agiBase, child.agiBonus)
+    child.morsure = getValue(child.morsureBase, child.morsureBonus)
+    child.piqure = getValue(child.piqureBase, child.piqureBonus)
+
+    child.score = fixNumber((child.vita + child.force + child.agi + child.morsure + child.piqure) / 5);
+}
+function getValue(base, bonus){
+    var value = fixNumber(base + ( base * (bonus/100) ))
+
+    if (isNaN(value)) { value = base }
+
+    return value
+}
 
 /* ########## REMPLACER LES PARENTS ########### */
 
@@ -1033,6 +1235,7 @@ $(document).ready(function () {
     $('.supprimer-critter-queen').click(function (e) {
         if (e.shiftKey == true) {
             queenChild = [];
+            updateQueenChild()
         } else {
             deleteQueenChild();
         }
@@ -1040,6 +1243,7 @@ $(document).ready(function () {
     $('.supprimer-critter-king').click(function (e) {
         if (e.shiftKey == true) {
             kingChild = [];
+            updateKingChild()
         } else {
             deleteKingChild();
         }
@@ -1050,20 +1254,6 @@ $(document).ready(function () {
 
 
 /* ########## SELECTION ET PLACEMENT CRITTER ########### */
-
-function decide(type, critter) {
-    if (critter.king != null) {
-        if (critter[type] > critter.king[type]) {
-            return true;
-        }
-    }
-
-    if (critter.queen != null) {
-        if (critter[type] > critter.queen[type]) {
-            return true;
-        }
-    }
-}
 
 function nextFreePlace(parent, child) {
     var tab;
@@ -1079,14 +1269,9 @@ function nextFreePlace(parent, child) {
             found = true;
         }
     }
+
     if (found == false) {
-
-        if (tab[upgrade].score < child.score) {
-            return upgrade;
-        } else {
-            return -1;
-        }
-
+        return -1;
     } else {
         return place;
     }
@@ -1153,6 +1338,22 @@ $(document).keyup(function (e) {
     }
 });
 
+
+
+
+/* ########## Tri ########## */
+$(document).ready(function () {
+    $('#tri1 select').change(function () {
+        $('#tri2 select').val($('#tri1 select').val())
+        updateKingChild()
+        updateQueenChild()
+    })
+    $('#tri2 select').change(function () {
+        $('#tri1 select').val($('#tri2 select').val())
+        updateKingChild()
+        updateQueenChild()
+    })
+});
 
 
 
@@ -1239,8 +1440,13 @@ function updateKing() {
     $('#kingAgi').text(king.agi);
     $('#kingMorsure').text(king.morsure);
     $('#kingPiqure').text(king.piqure);
-} //AFFICHE LE ROI CRITTER
 
+    if ( king.mutation != undefined ) {
+        if ( king.mutation.length > 0) {
+            updateMutation('king')
+        }
+    }
+} //AFFICHE LE ROI CRITTER
 function updateQueen() {
     var queen = critterQueen;
     $('#queenScore').text(queen.score);
@@ -1249,6 +1455,12 @@ function updateQueen() {
     $('#queenAgi').text(queen.agi);
     $('#queenMorsure').text(queen.morsure);
     $('#queenPiqure').text(queen.piqure);
+
+    if ( queen.mutation != undefined ) {
+        if ( queen.mutation.length > 0 ) {
+            updateMutation('queen')
+        }
+    }
 } //AFFICHE LA REINE CRITTER
 
 function updateKingChild() {
@@ -1257,6 +1469,7 @@ function updateKingChild() {
 
     for (i = 0; i <= upgrade; i++) {
         if (kingChild[i] != null) {
+
             //MODIFIE L'AFFICHAGE DE L'ENFANT
             $('#kingChild' + i + 'Score').text(kingChild[i].score);
             $('#kingChild' + i + 'Vita').text(kingChild[i].vita);
@@ -1272,6 +1485,13 @@ function updateKingChild() {
             colorKingChild("agi", i);
             colorKingChild("morsure", i);
             colorKingChild("piqure", i);
+
+            if ( kingChild[i].mutation != undefined ) {
+                if ( kingChild[i].mutation.length > 0 ) {
+                    updateMutation('kingChild', i)
+                }
+            }
+
         } else {
             $('#kingChild' + i + 'Score').text("");
             $('#kingChild' + i + 'Vita').text("");
@@ -1279,10 +1499,16 @@ function updateKingChild() {
             $('#kingChild' + i + 'Agi').text("");
             $('#kingChild' + i + 'Morsure').text("");
             $('#kingChild' + i + 'Piqure').text("");
+
+            $('#kingChild' + i + 'Score').qtip("destroy", true);
+            $('#kingChild' + i + 'Vita').qtip("destroy", true);
+            $('#kingChild' + i + 'Force').qtip("destroy", true);
+            $('#kingChild' + i + 'Agi').qtip("destroy", true);
+            $('#kingChild' + i + 'Morsure').qtip("destroy", true);
+            $('#kingChild' + i + 'Piqure').qtip("destroy", true);
         }
     }
 } //AFFICHE LE 1er ENFANT ROI CRITTER
-
 function updateQueenChild() {
 
     sortChild("queen");
@@ -1302,6 +1528,13 @@ function updateQueenChild() {
             colorQueenChild("agi", i);
             colorQueenChild("morsure", i);
             colorQueenChild("piqure", i);
+
+            if ( queenChild[i].mutation != undefined ) {
+                if ( queenChild[i].mutation.length > 0 ) {
+                    updateMutation('queenChild', i)
+                }
+            }
+
         } else {
             $('#queenChild' + i + 'Score').text("");
             $('#queenChild' + i + 'Vita').text("");
@@ -1309,9 +1542,256 @@ function updateQueenChild() {
             $('#queenChild' + i + 'Agi').text("");
             $('#queenChild' + i + 'Morsure').text("");
             $('#queenChild' + i + 'Piqure').text("");
+
+            $('#queenChild' + i + 'Score').qtip("destroy", true);
+            $('#queenChild' + i + 'Vita').qtip("destroy", true);
+            $('#queenChild' + i + 'Force').qtip("destroy", true);
+            $('#queenChild' + i + 'Agi').qtip("destroy", true);
+            $('#queenChild' + i + 'Morsure').qtip("destroy", true);
+            $('#queenChild' + i + 'Piqure').qtip("destroy", true);
         }
     }
 } //AFFICHE LE 1er ENFANT REINE CRITTER
+
+function updateMutation(parent , place="null") {
+    if ( parent == "kingChild" ) critter = kingChild[place]
+    if ( parent == "queenChild" ) critter = queenChild[place]
+    if ( parent == "king" ) critter = critterKing
+    if ( parent == "queen" ) critter = critterQueen
+
+    var i, tour = critter.mutation.length
+    var totalMutation = {
+        vita: 0,
+        force: 0,
+        agi: 0,
+        morsure: 0,
+        piqure: 0
+    }
+    for ( i=0 ; i<tour ; i++ ) {
+        totalMutation[critter.mutation[i].trait]++ 
+    }
+
+    var append, html
+    if ( totalMutation.vita != 0 ) {
+        append = getAppendMutation(totalMutation.vita, critter.newMutation)
+        html = getHtmlMutation(critter, "vita")
+
+        if ( place != "null" ) {
+            $('#'+parent+place+'Vita').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+place+'Vita').next().html() 
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+        else {
+            $('#'+parent+'Vita').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+'Vita').next().html() 
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+    }
+    if ( totalMutation.force != 0 ) {
+        append = getAppendMutation(totalMutation.force, critter.newMutation)
+        html = getHtmlMutation(critter, "force")
+
+        if ( place != "null" ) {
+            $('#'+parent+place+'Force').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+place+'Force').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+        else {
+            $('#'+parent+'Force').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+'Force').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+
+
+    }
+    if ( totalMutation.agi != 0 ) {
+        append = getAppendMutation(totalMutation.agi, critter.newMutation)
+        html = getHtmlMutation(critter, "agi")
+
+        if ( place != "null" ) {
+            $('#'+parent+place+'Agi').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+place+'Agi').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+        else {
+            $('#'+parent+'Agi').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+'Agi').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+    }
+    if ( totalMutation.morsure != 0 ) {
+        append = getAppendMutation(totalMutation.morsure, critter.newMutation)
+        html = getHtmlMutation(critter, "morsure")
+
+        if ( place != "null" ) {
+            $('#'+parent+place+'Morsure').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+place+'Morsure').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+        else {
+            $('#'+parent+'Morsure').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+'Morsure').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+    }
+    if ( totalMutation.piqure != 0 ) {
+        append = getAppendMutation(totalMutation.piqure, critter.newMutation)
+        html = getHtmlMutation(critter, "piqure")
+
+        if ( place != "null" ) {
+            $('#'+parent+place+'Piqure').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+place+'Piqure').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+        else {
+            $('#'+parent+'Piqure').append(append).after(html).qtip({
+                content: {
+                    text: $('#'+parent+'Piqure').next().html()
+                },
+                style: { 
+                    classes: 'custom-qtip qtip-bootstrap'
+                },
+                position: {
+                    my: 'bottom middle',
+                    at: 'top middle'
+                }
+            }).next().remove()
+        }
+    }
+
+    $('.mutation').css('color', 'black')
+
+}
+function getHtmlMutation(critter, stat) { 
+    var html, i, mut, parentMutation, style
+
+    html = '<div class="hidden text-center"><h2>Mutations</h2>'
+    /*
+    for (i=0; i<tour; i++) {
+        mut = critter.mutation[i]
+        html = html + '<table class="table table-responsive table-hover table-bordered text-center"><tbody><tr><th>Nom</th><td>'+mut.name+'</td></tr><tr><th>Effet</th><td>+ '+mut.value+'</td></tr><tr><th colspan="2">'+mut.expression+'</th></tr></tbody></table>'
+    }
+*/
+    critter.mutation.forEach(function(item){
+
+        if ( item.trait == stat ) {
+
+            if ( critterQueen != undefined) parentMutation = critterQueen.mutation
+            if ( critterKing != undefined) parentMutation = critterKing.mutation
+
+            if ( parentMutation != undefined ) {
+                parentMutation = parentMutation.find(function(parentItem){
+                    return parentItem.id == item.id
+                })
+            }
+
+            if ( parentMutation != undefined ) {        
+
+                if ( item.value < parentMutation.value ) {style = "color:red"}
+                else if ( item.value == parentMutation.value ) {style = "color:black"}
+                else {style = "color:#9ace9a"}
+
+            } else { style = "color:black"}
+
+            html = html + '<table class="table table-responsive table-hover table-bordered text-center"><tbody><tr><th>Nom</th><td>'+item.name+'</td></tr><tr><th>Effet</th><td><p style="'+style+';">+ '+item.value+'%</p></td></tr><tr><th colspan="2">'+item.expression+'</th></tr></tbody></table>'
+        }
+    })
+
+    html = html + '</div>'
+
+    return html
+}
+function getAppendMutation(number, newMutation) {
+    var append;
+    if ( newMutation == true ) {
+        append = '<p class="mutation"><span class="glyphicon glyphicon-star" aria-hidden="true"></span>'+number+' mutation(s)<span class="glyphicon glyphicon-star" aria-hidden="true"></span></p>'
+    } else {
+        append = '<p class="mutation">'+number+' mutation(s)</p>'
+    }
+    return append
+}
+
 
 function colorKingChild(stat, i) {
     var majStat = stat.charAt(0).toUpperCase() + stat.substring(1);
@@ -1323,7 +1803,6 @@ function colorKingChild(stat, i) {
     if (child < parent) $('#kingChild' + i + majStat).css("color", "red");
     if (child == parent) $('#kingChild' + i + majStat).css("color", "black");
 } //Colore
-
 function colorQueenChild(stat, i) {
     var majStat = stat.charAt(0).toUpperCase() + stat.substring(1);
 
@@ -1336,14 +1815,55 @@ function colorQueenChild(stat, i) {
 } //Colore
 
 function sortChild(parent) {
-    var tab;
+    var tab, stat
     if (parent == "queen") tab = queenChild;
     if (parent == "king") tab = kingChild;
 
+    var type = $('#tri1 select').val()
+
+    switch ( type ) {
+        case "Score" :
+            stat = "score";
+            break;
+        case "Vitalité" :
+            stat = "vita";
+            break;
+        case "Force" :
+            stat = "force";
+            break;
+        case "Agilité" :
+            stat = "agi";
+            break;
+        case "Morsure" :
+            stat = "morsure";
+            break;
+        case "Piqure" :
+            stat = "piqure";
+            break;
+        case "Mutation":
+            stat = "mutation"
+            break;
+        default :
+            stat = "score";
+
+    }
     tab.sort(function (a, b) {
-        if (a.score > b.score) return -1;
-        if (a.score < b.score) return 1;
+
+
+        if (stat == "mutation") {
+            if (a.mutation.length > b.mutation.length ) {return -1; }
+            else if (a.mutation.length < b.mutation.length ) {return 1; }
+            else {
+                if (a.score > b.score) return -1;
+                if (a.score < b.score) return 1;
+                return 0;
+            }
+        }
+
+        if (a[stat] > b[stat]) return -1;
+        if (a[stat] < b[stat]) return 1;
         return 0;
+
     });
 
 
@@ -1439,6 +1959,8 @@ function setAllWorker2(critter) {
         if (typeof critter.king == "object") setAllWorker2(kingChild[0]);
         if (typeof critter.queen == "object") setAllWorker2(queenChild[0]);
     }
+    updateKingChild()
+    updateQueenChild()
 }
 
 function findEmptyPlace2(critter) {
@@ -1461,30 +1983,9 @@ function findEmptyPlace2(critter) {
     return false
 }
 
-function findBestPlace(critter) {
-    if (usineEau.findBestPlace(critter) != -1) {
-        usineEau.replaceWorker(usineEau.findBestPlace(critter), critter)
-        return true
-    }
-    if (usineTerre.findBestPlace(critter) != -1) {
-        usineTerre.replaceWorker(usineTerre.findBestPlace(critter), critter)
-        return true
-    }
-    if (usineTransportEau.findBestPlace(critter) != -1) {
-        usineTransportEau.replaceWorker(usineTransportEau.findBestPlace(critter), critter)
-        return true
-    }
-    if (usineTransportTerre.findBestPlace(critter) != -1) {
-        usineTransportTerre.replaceWorker(usineTransportTerre.findBestPlace(critter), critter)
-        return true
-    }
-    return false
-}
-
 function findBestPlace2(critter) {
-    var tempo = usineCursor
-    var found = false
-    var usine, i, tour=0
+    var found = false, usine, i, tour=0 , size
+    size = usineEau.level + usineTerre.level + usineTransportEau.level + usineTransportTerre.level
     do {
         tour++
         switch ( usineCursor[0] ) {
@@ -1501,236 +2002,263 @@ function findBestPlace2(critter) {
                 usine = usineTransportEau;
                 break;            
         }
-        log(usine.type)
-        found = usine.checkBetter(critter)
-    } while ( found == false || usineCursor != tempo || tour < 20)
-        }
+        found = usine.checkBetter(critter, tour)
+
+        if (found) return true
+
+            } while ( found == false && tour <= size)
+
+                log("not Replaced")
+                return false
+
+}
 
 
-        var stockUpdate = new Date().getTime();
-    setInterval(function () {
-        var thisUpdate = new Date().getTime();
-        var diff = (thisUpdate - stockUpdate);
-        diff = Math.round(diff / 100);
-        updateStock(diff);
-        updateScore()
-        stockUpdate = thisUpdate;
-    }, 1000);
 
-    function updateStock() {
+var stockUpdate = new Date().getTime();
+setInterval(function () {
+    var thisUpdate = new Date().getTime();
+    var diff = (thisUpdate - stockUpdate);
+    diff = Math.round(diff / 100);
+    updateStock(diff);
+    updateScore()
+    stockUpdate = thisUpdate;
+}, 1000);
 
-        //Augmente le stock d'eau et terre    
-        usineStockTerre += usineTerre.getProduction();
-        usineStockEau += usineEau.getProduction();
+function updateStock() {
 
-
-        //Actualise le stock et le rend joli
-        usineStockTerre = fixNumber(usineStockTerre);
-        usineStockEau = fixNumber(usineStockEau);
+    //Augmente le stock d'eau et terre    
+    usineStockTerre += usineTerre.getProduction();
+    usineStockEau += usineEau.getProduction();
 
 
-        //Calcul du transport minimum
-        var minTransport = fixNumber( Math.min(usineTransportEau.getProduction(), usineTransportTerre.getProduction()))
+    //Actualise le stock et le rend joli
+    usineStockTerre = fixNumber(usineStockTerre);
+    usineStockEau = fixNumber(usineStockEau);
 
-        //Calcul le minimum entre transport et recolte
-        terre = usineTerre.getProduction() - minTransport
-        eau = usineEau.getProduction() - minTransport
 
-        //Augmentation du score si il y a assez de ressources
-        if (usineStockEau >= minTransport && usineStockTerre >= minTransport) {
+    //Calcul du transport minimum
+    var minTransport = fixNumber( Math.min(usineTransportEau.getProduction(), usineTransportTerre.getProduction()))
 
-            usineStockEau -= minTransport;
-            usineStockTerre -= minTransport;
+    //Calcul le minimum entre transport et recolte
+    terre = usineTerre.getProduction() - minTransport
+    eau = usineEau.getProduction() - minTransport
 
-            score += minTransport;
-        }
+    //Augmentation du score si il y a assez de ressources
+    if (usineStockEau >= minTransport && usineStockTerre >= minTransport) {
 
-        //Affichage
-        if ( usineStockEau > minTransport && usineStockTerre > minTransport ) {    
-            $('#stock-terre>p:last-child').text(fixNumber(usineStockTerre) + " (" + fixNumber(terre) + " /s)");
-            $('#stock-eau>p:last-child').text(fixNumber(usineStockEau) + " (" + fixNumber(eau) + " /s)");
+        usineStockEau -= minTransport;
+        usineStockTerre -= minTransport;
 
-            if ( $('#creation>p:last-child').text() != fixNumber(minTransport) + " / s" ) {
-                $('#creation>p:last-child').text(fixNumber(minTransport) + " / s");
-            }
-
-        } else {
-
-            var min = fixNumber( Math.min(usineEau.getProduction(), usineTerre.getProduction()))
-
-            $('#stock-terre>p:last-child').text(fixNumber(usineStockTerre) + " (" + fixNumber(usineTerre.getProduction() - min) + " /s)");
-            $('#stock-eau>p:last-child').text(fixNumber(usineStockEau) + " (" + fixNumber(usineEau.getProduction() - min) + " /s)");
-
-            if ( $('#creation>p:last-child').text() != fixNumber(minTransport) + " / s" ) {    
-
-                $('#creation>p:last-child').text(fixNumber(min) + " / s");
-            }
-
-        }
+        score += minTransport;
     }
 
+    //Affichage
+    if ( usineStockEau > minTransport && usineStockTerre > minTransport ) {    
+        $('#stock-terre>p:last-child').text(fixNumber(usineStockTerre) + " (" + fixNumber(terre) + " /s)");
+        $('#stock-eau>p:last-child').text(fixNumber(usineStockEau) + " (" + fixNumber(eau) + " /s)");
 
-    /* ################ PARTIE ARMY ################## */
+        if ( $('#creation>p:last-child').text() != fixNumber(minTransport) + " / s" ) {
+            $('#creation>p:last-child').text(fixNumber(minTransport) + " / s");
+        }
 
-    /* ############ RELIER LES BOUTONS ############# */
-    $(document).ready(function () {
-        $('.soldier-king').click(function (e) {
-            if (army.currentBattle == false) {
-                if (e.shiftKey == true) {
-                    setAllSoldier(kingChild[0]);
-                } else {
-                    setSoldier(kingChild[0]);
-                }
+    } else {
+
+        var min = fixNumber( Math.min(usineEau.getProduction(), usineTerre.getProduction()))
+
+        $('#stock-terre>p:last-child').text(fixNumber(usineStockTerre) + " (" + fixNumber(usineTerre.getProduction() - min) + " /s)");
+        $('#stock-eau>p:last-child').text(fixNumber(usineStockEau) + " (" + fixNumber(usineEau.getProduction() - min) + " /s)");
+
+        if ( $('#creation>p:last-child').text() != fixNumber(minTransport) + " / s" ) {    
+
+            $('#creation>p:last-child').text(fixNumber(min) + " / s");
+        }
+
+    }
+}
+
+
+/* ################ PARTIE ARMY ################## */
+
+/* ############ RELIER LES BOUTONS ############# */
+$(document).ready(function () {
+    $('.soldier-king').click(function (e) {
+        if (army.currentBattle == false) {
+            if (e.shiftKey == true) {
+                setAllSoldier(kingChild[0]);
+            } else {
+                setSoldier(kingChild[0]);
             }
-        });
-        $('.soldier-queen').click(function (e) {
-            if (army.currentBattle == false) {
-                if (e.shiftKey == true) {
-                    setAllSoldier(queenChild[0]);
-                } else {
-                    setSoldier(queenChild[0]);
-                }
+        }
+    });
+    $('.soldier-queen').click(function (e) {
+        if (army.currentBattle == false) {
+            if (e.shiftKey == true) {
+                setAllSoldier(queenChild[0]);
+            } else {
+                setSoldier(queenChild[0]);
             }
-        });
-
-        $('#army-upgrade').click(function () {
-            army.upgrade()
-        })
+        }
     });
 
-    /* ############ DEFINITION DES FONCTIONS ############# */
-    function setSoldier(critter) {
-        if (typeof critter !== "undefined") {
-            var place = army.findPlace(critter)
-            army.replaceSoldier(place, critter)
-            updateData()
+    $('#army-upgrade').click(function () {
+        army.upgrade()
+    })
+});
+
+/* ############ DEFINITION DES FONCTIONS ############# */
+function setSoldier(critter) {
+    log("clickedSoldier")
+    if (typeof critter !== "undefined") {
+        var place = army.findPlace(critter)
+        army.replaceSoldier(place, critter)
+        updateData()
+    }
+}
+function setAllSoldier(critter) {
+    if (typeof critter !== "undefined") {
+        setSoldier(critter);
+
+        if (typeof critter.king == "object") setAllSoldier(kingChild[0]);
+        if (typeof critter.queen == "object") setAllSoldier(queenChild[0]);
+    }
+}
+function createTable() {
+
+    var width, height;
+
+    width = map.map[map.data.level][0]
+    height = map.map[map.data.level][1]
+
+    if (map.data.empty == false) {
+        width = map.data.width
+        height = map.data.height
+    }
+
+    $('#create-table').empty()
+    var table = "";
+    for (i = 0; i < height; i++) {
+        var row = '<tr id="row' + i + '" class="">'
+        for (j = 0; j < width; j++) {
+            var col = '<td id="col' + j + '" class=""><p></p></td>'
+            row += col;
         }
+        row += '</tr>'
+        table += row
     }
-    function setAllSoldier(critter) {
-        if (typeof critter !== "undefined") {
-            setSoldier(critter);
+    $('#create-table').append(table)
 
-            if (typeof critter.king == "object") setAllSoldier(kingChild[0]);
-            if (typeof critter.queen == "object") setAllSoldier(queenChild[0]);
+    map.data.height = height
+    map.data.width = width
+    map.init()
+}
+
+
+function testNumber() {
+    var i,j,hp,atk
+    for (i=0; i < 10; i++) {
+        log("tier "+i)
+        for (j=1; j<10 ; j++) {
+            hp = Math.random() * (j * 10) + j * 10 + 20 + //Varie en fonction des lv Donger
+                (Math.random()-0.5)*2*25*Math.pow(1.25, i) + // +/-
+                (100*Math.pow(1.6, i)-100) +//Varie en fonction des lv Map
+                (i*j*Math.pow(1.5,i)) + //Varie en fonction de lvMap * lvDonger
+                (200/(i+1)*i)
+            hp = Math.round(hp)
+
+            atk = Math.floor(Math.random() * j + j + 3) +
+                (Math.random()-0.5)*2*2.5*Math.pow(1.25, i) + // +/-
+                (10*Math.pow(1.6, i)-10) +//Varie en fonction des lv Map
+                (i*j*Math.pow(1.1,i)) + //Varie en fonction de lvMap * lvDonger
+                (20/(i+1)*i)
+            atk = Math.round(atk)
+            log("hp : "+hp+" atk : "+atk)
+        }        
+    }
+}
+function testCritter() {
+    var i, random, adding, c
+
+    for ( var i = 0; i < 1500; i++) {
+
+        c = i
+
+        // AJOUTE OU RETIRE LA VALEUR
+        random = Math.random() - 0.5;
+        if (random < -0.2) random = -1;
+        if (random > 0.2) random = 1;
+        if (random >= -0.2 && random <= 0.2) random = 0;
+
+        // VALEUR A AJOUTER OU RETIRER
+        adding = Math.random() * (c / 25);  
+        adding = Math.ceil(adding);
+        adding = adding * random;
+
+        var boost = critterBoost(c)
+
+        //RETOUR
+        c = c + adding + boost;
+
+        var diff = Math.abs(c-i)        
+        if (diff > i/25) {
+            c = i + i/25
         }
-    }
-    function createTable() {
 
-        var width, height;
-
-        width = map.map[map.data.level][0]
-        height = map.map[map.data.level][1]
-
-        if (map.data.empty == false) {
-            width = map.data.width
-            height = map.data.height
+        if (adding != 0 && i%10 == 0) {
+            log(i+" : "+c+" ( " + boost + " ) + ( "+ diff +" )")
         }
 
-        $('#create-table').empty()
-        var table = "";
-        for (i = 0; i < height; i++) {
-            var row = '<tr id="row' + i + '" class="">'
-            for (j = 0; j < width; j++) {
-                var col = '<td id="col' + j + '" class=""><p></p></td>'
-                row += col;
-            }
-            row += '</tr>'
-            table += row
+    }
+}
+
+
+
+function randomTestOutOf100(number) {
+    if ( Math.random()*100 <= number ) return true
+    else return false
         }
-        $('#create-table').append(table)
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+function fixNumber(a) {
+    return Math.round(a * 10) / 10
+}
+function alerter(e) {
+    var col = $(e).attr('id').slice(3)
+    var row = $(e.parentElement).attr('id').slice(3)
 
-        map.data.height = height
-        map.data.width = width
-        map.init()
+    var clickedObject = map.data.row[row][col]
+
+    army.triggerBattle(clickedObject)
+}
+function greenYellowRed(number, max) {
+    number--
+    max = max / 2
+    var r, g, b;
+    if (number < max) {
+        r = Math.floor(255 * (number / max))
+        g = 255;
+    } else {
+        r = 255;
+        g = Math.floor(255 * ((max - number % max) / max))
     }
+    b = 0
+    return r + "," + g + "," + b;
+}
+function getRandomIntInclusive(min, max){
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min +1)) + min;
+}
+// #######################
+// # APPEL DES FONCTIONS #
+// #######################
 
-
-    function testNumber() {
-        var i,j,hp,atk
-        for (i=0; i < 10; i++) {
-            log("tier "+i)
-            for (j=1; j<10 ; j++) {
-                hp = Math.random() * (j * 10) + j * 10 + 20 + //Varie en fonction des lv Donger
-                    (Math.random()-0.5)*2*25*Math.pow(1.25, i) + // +/-
-                    (100*Math.pow(1.6, i)-100) +//Varie en fonction des lv Map
-                    (i*j*Math.pow(1.5,i)) + //Varie en fonction de lvMap * lvDonger
-                    (200/(i+1)*i)
-                hp = Math.round(hp)
-
-                atk = Math.floor(Math.random() * j + j + 3) +
-                    (Math.random()-0.5)*2*2.5*Math.pow(1.25, i) + // +/-
-                    (10*Math.pow(1.6, i)-10) +//Varie en fonction des lv Map
-                    (i*j*Math.pow(1.1,i)) + //Varie en fonction de lvMap * lvDonger
-                    (20/(i+1)*i)
-                atk = Math.round(atk)
-                log("hp : "+hp+" atk : "+atk)
-            }        
-        }
-    }
-    function testCritter() {
-        var i, random, adding, c
-
-        for ( var i = 0; i < 500; i++) {
-
-            c = i
-
-            // AJOUTE OU RETIRE LA VALEUR
-            random = Math.random() - 0.5;
-            if (random < -0.2) random = -1;
-            if (random > 0.2) random = 1;
-            if (random >= -0.2 && random <= 0.2) random = 0;
-
-            // VALEUR A AJOUTER OU RETIRER
-            adding = Math.random() * (c / 25);  
-            adding = Math.ceil(adding);
-            adding = adding * random;
-            if (adding != 0 && i%4 == 0) {
-                log(i+" : "+adding)
-            }
-
-        }
-    }
-
-
-    function fixNumber(a) {
-        return Math.round(a * 10) / 10
-    }
-    function alerter(e) {
-        var col = $(e).attr('id').slice(3)
-        var row = $(e.parentElement).attr('id').slice(3)
-
-        var clickedObject = map.data.row[row][col]
-
-        army.triggerBattle(clickedObject)
-    }
-    function greenYellowRed(number, max) {
-        number--
-        max = max / 2
-        var r, g, b;
-        if (number < max) {
-            r = Math.floor(255 * (number / max))
-            g = 255;
-        } else {
-            r = 255;
-            g = Math.floor(255 * ((max - number % max) / max))
-        }
-        b = 0
-        return r + "," + g + "," + b;
-    }
-    function getRandomIntInclusive(min, max){
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min +1)) + min;
-    }
-    // #######################
-    // # APPEL DES FONCTIONS #
-    // #######################
-
-    initGame();
-    checkPage();
-    $(document).ready(function () {
-        setTimeout(function () {
-            army.update();
-            updateUpgrade();
-        }, 100);
-    });
+initGame();
+checkPage();
+$(document).ready(function () {
+    setTimeout(function () {
+        army.update();
+        updateUpgrade();
+    }, 100);
+});

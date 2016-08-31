@@ -2,7 +2,7 @@
 echo '
 <tbody id="'.$parent.'Child'.$id.'">
     <tr>
-        <th id="'.$parent.'Child'.$id.'Score"></th>
+        <th id="'.$parent.'Child'.$id.'Score"><p class="value"></p></th>
         <th id="'.$parent.'Child'.$id.'Vita"></th>
         <th id="'.$parent.'Child'.$id.'Force"></th>
         <th id="'.$parent.'Child'.$id.'Agi"></th>
