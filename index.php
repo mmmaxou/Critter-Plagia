@@ -146,13 +146,14 @@
                                         <option>Piqure</option>
                                         <option>Base</option>
                                         <option>Bonus</option>
+                                        <option>Variance</option>
                                     </select>
                                 </div>
                             </div>
                             <br />
                             <div class="row">
                                 <div class="table-responsive">
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered parent-table">
                                         <thead class="stats">
                                             <tr>
                                                 <th>Score</th>
@@ -185,7 +186,7 @@
                             <br/>
                             <div class="row">
                                 <div class="table-responsive">
-                                    <table class="table table-bordered">
+                                    <table class="table table-bordered parent-table">
                                         <thead class="stats">
                                             <tr>
                                                 <th>Score</th>
@@ -232,6 +233,7 @@
                                         <option>Piqure</option>
                                         <option>Base</option>
                                         <option>Bonus</option>
+                                        <option>Variance</option>
                                     </select>
                                 </div>
                             </div>

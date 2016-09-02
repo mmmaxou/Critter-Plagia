@@ -31,7 +31,7 @@ var usineStockTerre;
 var usineCursor = [0,0];
 
 var admin = false;
-var gameSpeed = 1;
+var gameSpeed = 2;
 
 var timer;
 
@@ -132,7 +132,7 @@ function Usine(type, stat) {
                 sum += this.workers[i];
             }
         }
-        this.productionNum = sum / 10;
+        this.productionNum = fixNumber(sum / 10);
     };
     this.updateProduction = function () {
         this.production();
@@ -205,7 +205,7 @@ function Army() {
                 percentage = hp * 10 / vita;
 
                 $('#army'+i+' .progress-bar').css('width', percentage + '%').attr('aria-valuenow', hp).attr('aria-valuemax', vita*10).text(fixNumber(hp))
-                $('#army'+i+' #ATK').text((army.soldiers[i].piqure + army.soldiers[i].morsure)/2)
+                $('#army'+i+' #ATK').text(fixNumber((army.soldiers[i].piqure + army.soldiers[i].morsure)/2))
 
             } else {
                 $('#army' + i).hide();
@@ -277,6 +277,7 @@ function Army() {
         var i = 0,j = 0;
         var attack,target;
         var allyTurn = true;
+        var butin = this.ennemyArmy[0].life
 
         var IDinterval = setInterval(function () {
             if (army.ennemyArmy.length > 0 && army.soldiers.length > 0) {
@@ -334,6 +335,8 @@ function Army() {
                         map.transformCoord(map.data.ennemyMound.coord) == "clearedEnnemyMound"
                         map.addButton()
                     }
+                    infoPop("Bataille gagnée. Butin : " + butin)
+                    score += butin
                     map.changeState(army.currentBattle.coord, "clear")
                     map.updateState()
                 }
@@ -341,7 +344,7 @@ function Army() {
                 army.currentBattle = false;
                 army.triggerMap();
             }
-        }, 1000*gameSpeed)
+        }, 500*gameSpeed)
 
         }
 
@@ -379,7 +382,7 @@ function Army() {
             hp = fixNumber(hp)
 
             $('.wrapper-ally-critter').append(
-                '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::>  ( ATK : <p id="ATK">'+ (army.soldiers[i].piqure + army.soldiers[i].morsure)/2 +'</p> )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + hp + ' aria-valuemin="0" aria-valuemax=' + vita*10 + ' style="width:'+percentage+'%">' + hp + '</div></div>' + '</div>')
+                '<div class="battle-critter">' + '<p class="text-center">∩༼˵☯‿☯˵༽つ¤=[]:::::>  ( ATK : <p id="ATK">'+ fixNumber((army.soldiers[i].piqure + army.soldiers[i].morsure)/2) +'</p> )</p>' + '<div class="progress">' + '<div class="progress-bar" role="progressbar" aria-valuenow=' + hp + ' aria-valuemin="0" aria-valuemax=' + vita*10 + ' style="width:'+percentage+'%">' + hp + '</div></div>' + '</div>')
         }
     }
     this.addEnnemyArmy = function (level) {
@@ -587,11 +590,6 @@ function Map() {
 
                 var emplacement = this.data.row[i][j];
 
-                if (emplacement.state == "ennemyMound") {
-                    map.color(emplacement)
-                    emplacement.tile.empty().append('<span class="glyphicon glyphicon-exclamation-sign"></span>')
-                }
-
                 if(emplacement.state == "mound" || emplacement.state == "clear") {
 
                     this.color(emplacement);
@@ -754,11 +752,36 @@ function initGame() {
 
 
     mapMutation = [
-        new Gene(001, "vita", "recessive", "Mutation 1", 0),
-        new Gene(101, "force", "recessive", "Mutation 2", 0),
-        new Gene(201, "agi", "recessive", "Mutation 3", 0),
-        new Gene(301, "morsure", "recessive", "Mutation 4", 0),
-        new Gene(401, "piqure", "recessive", "Mutation 5", 0),
+        new Gene(001, "vita", "recessive", "I'm not always a mutation. But when I am, I buff you", 0),
+        new Gene(002, "vita", "recessive", "4HEAD HP", 0),
+        new Gene(003, "vita", "recessive", "Coeur de Weeaboo", 0),
+        new Gene(004, "vita", "recessive", "Corpulence de MrDestructoid", 0),
+        new Gene(005, "vita", "recessive", "Philosoraptor Brain", 0),
+        new Gene(006, "vita", "recessive", "The Flying Spaghetti Monster", 0),
+        new Gene(101, "force", "recessive", "Force de Doge", 0),
+        new Gene(102, "force", "recessive", "Muscles d'un VoHiYo", 0),
+        new Gene(103, "force", "recessive", "Face is the place", 0),
+        new Gene(104, "force", "recessive", "GachiGASM body", 0),
+        new Gene(105, "force", "recessive", "Rage Comics Incomming", 0),
+        new Gene(106, "force", "recessive", "THIS IS SPARTAAAAAA", 0),
+        new Gene(201, "agi", "recessive", "Agilité de Nyan Cat", 0),
+        new Gene(202, "agi", "recessive", "KREYGASM", 0),
+        new Gene(203, "agi", "recessive", "HotPokket Speed", 0),
+        new Gene(204, "agi", "recessive", "DOOMGuy Speed", 0),
+        new Gene(205, "agi", "recessive", "Agilité de Keyboard Cat", 0),
+        new Gene(206, "agi", "recessive", "Epic FAIL", 0),
+        new Gene(301, "morsure", "recessive", "Morsure du Kappa", 0),
+        new Gene(302, "morsure", "recessive", "Dents de WutFace", 0),
+        new Gene(303, "morsure", "recessive", "Morsure SMORC", 0),
+        new Gene(304, "morsure", "recessive", "mmmmh, NotLikeThis", 0),
+        new Gene(305, "morsure", "recessive", "Charlie Sheen Face", 0),
+        new Gene(306, "morsure", "recessive", "The RICKROLL", 0),
+        new Gene(401, "piqure", "recessive", "Dard de PogChamp", 0),
+        new Gene(402, "piqure", "recessive", "Attaque de PJSalt", 0),
+        new Gene(403, "piqure", "recessive", "BibleThump pointu", 0),
+        new Gene(404, "piqure", "recessive", "Kill the animals, save the frames", 0),
+        new Gene(405, "piqure", "recessive", "Trololo song", 0),
+        new Gene(406, "piqure", "recessive", "Haters gonna Hate", 0),
     ]
 
 
@@ -931,10 +954,11 @@ function log(obj) {
 /* ########## CREER UN CRITTER ########## */
 
 function makeStat(a, b) {
+    
     /*
     if (isNaN(a)) a = 1
     if (isNaN(b)) b = 1
-*/
+
     // MOYENNE
     var c, e;
 
@@ -968,19 +992,28 @@ function makeStat(a, b) {
     //RETOUR
     c = c + adding + boost;
     if (c < 1) c = 1;
-
-    return c;
+    */
+    
+    var min = Math.min(a,b)
+    var max = Math.max(a,b)
+    
+    if ( min >= 2 ) min = Math.floor( min - min/100 )
+    max = Math.ceil( max + max/100)
+    
+    var value = Math.floor(Math.random() * (max - min +1)) + min;
+    
+    return value;
 }
 
 function createChild() {
     var king = critterKing;
     var queen = critterQueen;
 
-    var vita = makeStat(king.vita, queen.vita);
-    var force = makeStat(king.force, queen.force);
-    var agi = makeStat(king.agi, queen.agi);
-    var morsure = makeStat(king.morsure, queen.morsure);
-    var piqure = makeStat(king.piqure, queen.piqure);
+    var vita = makeStat(king.vitaBase, queen.vitaBase);
+    var force = makeStat(king.forceBase, queen.forceBase);
+    var agi = makeStat(king.agiBase, queen.agiBase);
+    var morsure = makeStat(king.morsureBase, queen.morsureBase);
+    var piqure = makeStat(king.piqureBase, queen.piqureBase);
 
     var child = {
 
@@ -1006,15 +1039,18 @@ function createChild() {
 
         , mutation: []
         , newMutation : false
+        , variance: 0
 
     };
 
     parentMutation(king, queen, child)
-    if ( randomTestOutOf100(50) ) {
+    if ( randomTestOutOf100(1) ) {
         critterMutation(child);
     }
 
     calculateTotalStat(child)
+
+    calculateVariance(child)
 
     var i, random = Math.round(Math.random());
     if (random == 1) {
@@ -1113,7 +1149,6 @@ function parentMutation(king, queen, child) {
             }
 
             a = getMutationProbabilityAndValue(mutation, heritage, gene[mutation])
-
             proba.push(a)
         }
         //    log(gene)
@@ -1132,10 +1167,9 @@ function parentMutation(king, queen, child) {
             }
         }
     }
-
 }
 function getMutationProbabilityAndValue(mutation, heritage, array){
-    var result = [mutation]
+    var result = [mutation], c
 
     if ( heritage == "recessive" && randomTestOutOf100(25)) {
         result.push("recessive")
@@ -1160,18 +1194,13 @@ function getMutationProbabilityAndValue(mutation, heritage, array){
     else result.push("none")
 
     if(result[1] == "dominant") {
-        var value1 =1
-        if ( array[1] != undefined ) {value1 = array[1].value}
-        
-        console.log("value1:"+value1)
-        
-        var c = makeStat( array[0].value, value1)
-        
-        console.log("c:"+c)
-        
-        result.push(c)
-        result.push(array[0].trait)
-    }
+
+        c = makeStat( array[0].value, array[1].value)
+
+    } else { c = 0 }
+
+    result.push(c)
+    result.push(array[0].trait)
 
     return result
 }
@@ -1192,6 +1221,13 @@ function getValue(base, bonus){
     if (isNaN(value)) { value = base }
 
     return value
+}
+
+function calculateVariance(child) {
+    var moyenne = fixNumber((child.vita + child.force + child.agi + child.morsure + child.piqure)/5)
+    var variance = Math.pow(child.vita - moyenne, 2) + Math.pow(child.force - moyenne, 2)+ Math.pow(child.agi - moyenne, 2) + Math.pow(child.morsure - moyenne, 2) + Math.pow(child.piqure - moyenne, 2)
+    variance = fixNumber(variance / 5)
+    child.variance = variance;
 }
 
 /* ########## REMPLACER LES PARENTS ########### */
@@ -1446,6 +1482,17 @@ function updateKing() {
             updateMutation('king')
         }
     }
+    
+    $('#kingScore').qtip({
+        content: {
+            text: "Variance du Donger : " + critterKing.variance
+        },
+        style: { classes: 'qtip-bootstrap'},
+        position: {
+            my: 'bottom left',
+            at: 'top middle'
+        }
+    })
 } //AFFICHE LE ROI CRITTER
 function updateQueen() {
     var queen = critterQueen;
@@ -1461,6 +1508,17 @@ function updateQueen() {
             updateMutation('queen')
         }
     }
+
+    $('#queenScore').qtip({
+        content: {
+            text: "Variance du Donger : " + critterQueen.variance
+        },
+        style: { classes: 'qtip-bootstrap'},
+        position: {
+            my: 'bottom left',
+            at: 'top middle'
+        }
+    })
 } //AFFICHE LA REINE CRITTER
 
 function updateKingChild() {
@@ -1491,6 +1549,17 @@ function updateKingChild() {
                     updateMutation('kingChild', i)
                 }
             }
+
+            $('#kingChild' + i + 'Score').qtip({
+                content: {
+                    text: "Variance du Donger : " + kingChild[i].variance
+                },
+                style: { classes: 'qtip-bootstrap'},
+                position: {
+                    my: 'bottom left',
+                    at: 'top middle'
+                }
+            })
 
         } else {
             $('#kingChild' + i + 'Score').text("");
@@ -1535,6 +1604,17 @@ function updateQueenChild() {
                 }
             }
 
+            $('#queenChild' + i + 'Score').qtip({
+                content: {
+                    text: "Variance du Donger : " + queenChild[i].variance
+                },
+                style: { classes: 'qtip-bootstrap'},
+                position: {
+                    my: 'bottom left',
+                    at: 'top middle'
+                }
+            })
+
         } else {
             $('#queenChild' + i + 'Score').text("");
             $('#queenChild' + i + 'Vita').text("");
@@ -1573,13 +1653,13 @@ function updateMutation(parent , place="null") {
 
     var append, html
     if ( totalMutation.vita != 0 ) {
-        append = getAppendMutation(totalMutation.vita, critter.newMutation)
+        append = getAppendMutation(totalMutation.vita, critter, "vita")
         html = getHtmlMutation(critter, "vita")
 
         if ( place != "null" ) {
             $('#'+parent+place+'Vita').append(append).after(html).qtip({
                 content: {
-                    text: $('#'+parent+place+'Vita').next().html() 
+                    text: $('#'+parent+place+'Vita').next().html()
                 },
                 style: { 
                     classes: 'custom-qtip qtip-bootstrap'
@@ -1591,7 +1671,7 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
         else {
-            $('#'+parent+'Vita').append(append).after(html).qtip({
+            $('#'+parent+'Vita').append(append).css('color', 'black').after(html).qtip({
                 content: {
                     text: $('#'+parent+'Vita').next().html() 
                 },
@@ -1606,7 +1686,7 @@ function updateMutation(parent , place="null") {
         }
     }
     if ( totalMutation.force != 0 ) {
-        append = getAppendMutation(totalMutation.force, critter.newMutation)
+        append = getAppendMutation(totalMutation.force, critter, "force")
         html = getHtmlMutation(critter, "force")
 
         if ( place != "null" ) {
@@ -1624,7 +1704,7 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
         else {
-            $('#'+parent+'Force').append(append).after(html).qtip({
+            $('#'+parent+'Force').append(append).css('color', 'black').after(html).qtip({
                 content: {
                     text: $('#'+parent+'Force').next().html()
                 },
@@ -1641,7 +1721,7 @@ function updateMutation(parent , place="null") {
 
     }
     if ( totalMutation.agi != 0 ) {
-        append = getAppendMutation(totalMutation.agi, critter.newMutation)
+        append = getAppendMutation(totalMutation.agi, critter, "agi")
         html = getHtmlMutation(critter, "agi")
 
         if ( place != "null" ) {
@@ -1659,7 +1739,7 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
         else {
-            $('#'+parent+'Agi').append(append).after(html).qtip({
+            $('#'+parent+'Agi').append(append).css('color', 'black').after(html).qtip({
                 content: {
                     text: $('#'+parent+'Agi').next().html()
                 },
@@ -1674,7 +1754,7 @@ function updateMutation(parent , place="null") {
         }
     }
     if ( totalMutation.morsure != 0 ) {
-        append = getAppendMutation(totalMutation.morsure, critter.newMutation)
+        append = getAppendMutation(totalMutation.morsure, critter, "morsure")
         html = getHtmlMutation(critter, "morsure")
 
         if ( place != "null" ) {
@@ -1692,7 +1772,7 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
         else {
-            $('#'+parent+'Morsure').append(append).after(html).qtip({
+            $('#'+parent+'Morsure').append(append).css('color', 'black').after(html).qtip({
                 content: {
                     text: $('#'+parent+'Morsure').next().html()
                 },
@@ -1707,7 +1787,7 @@ function updateMutation(parent , place="null") {
         }
     }
     if ( totalMutation.piqure != 0 ) {
-        append = getAppendMutation(totalMutation.piqure, critter.newMutation)
+        append = getAppendMutation(totalMutation.piqure, critter, "piqure")
         html = getHtmlMutation(critter, "piqure")
 
         if ( place != "null" ) {
@@ -1725,7 +1805,7 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
         else {
-            $('#'+parent+'Piqure').append(append).after(html).qtip({
+            $('#'+parent+'Piqure').append(append).css('color', 'black').after(html).qtip({
                 content: {
                     text: $('#'+parent+'Piqure').next().html()
                 },
@@ -1739,9 +1819,6 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
     }
-
-    $('.mutation').css('color', 'black')
-
 }
 function getHtmlMutation(critter, stat) { 
     var html, i, mut, parentMutation, style
@@ -1766,7 +1843,7 @@ function getHtmlMutation(critter, stat) {
                 })
             }
 
-            if ( parentMutation != undefined ) {        
+            if ( parentMutation != undefined ) {
 
                 if ( item.value < parentMutation.value ) {style = "color:red"}
                 else if ( item.value == parentMutation.value ) {style = "color:black"}
@@ -1774,7 +1851,7 @@ function getHtmlMutation(critter, stat) {
 
             } else { style = "color:black"}
 
-            html = html + '<table class="table table-responsive table-hover table-bordered text-center"><tbody><tr><th>Nom</th><td>'+item.name+'</td></tr><tr><th>Effet</th><td><p style="'+style+';">+ '+item.value+'%</p></td></tr><tr><th colspan="2">'+item.expression+'</th></tr></tbody></table>'
+            html = html + '<table class="table table-responsive table-hover table-bordered text-center"><tbody><tr><th>Nom</th><td>'+item.name+'</td></tr><tr><th>Effet</th><td><p style="'+style+';">+ '+item.value+'%</p></td></tr><tr><th colspan="2" style="text-transform:capitalize;">'+item.expression+'</th></tr></tbody></table>'
         }
     })
 
@@ -1782,16 +1859,39 @@ function getHtmlMutation(critter, stat) {
 
     return html
 }
-function getAppendMutation(number, newMutation) {
-    var append;
-    if ( newMutation == true ) {
+function getAppendMutation(number, critter, stat) {
+    var append, style, value=0, parentStat=stat+"Bonus";
+    
+    for ( var mutation of critter.mutation ) {
+        if ( mutation.trait == stat ) value += mutation.value
+    }
+    
+    if ( critter.king != undefined ) {
+        if ( value > critterKing[parentStat] ) {
+            style = "color:#9ace9a;"
+        } else if ( value < critterKing[parentStat] ) {
+            style = "color:red;"
+        } else {
+            style = "color:black;"
+        }
+    }
+    if ( critter.queen != undefined ) {
+        if ( value > critterQueen[parentStat] ) {
+            style = "color:#9ace9a;"
+        } else if ( value < critterQueen[parentStat] ) {
+            style = "color:red;"
+        } else {
+            style = "color:black;"
+        }
+    }
+    
+    if ( critter.newMutation == true ) {
         append = '<p class="mutation"><span class="glyphicon glyphicon-star" aria-hidden="true"></span>'+number+' mutation(s)<span class="glyphicon glyphicon-star" aria-hidden="true"></span></p>'
     } else {
-        append = '<p class="mutation">'+number+' mutation(s)</p>'
+        append = '<p class="mutation" style="'+style+'">'+number+' mutation(s)</p>'
     }
     return append
 }
-
 
 function colorKingChild(stat, i) {
     var majStat = stat.charAt(0).toUpperCase() + stat.substring(1);
@@ -1843,6 +1943,9 @@ function sortChild(parent) {
         case "Mutation":
             stat = "mutation"
             break;
+        case "Variance":
+            stat = "variance"
+            break;
         default :
             stat = "score";
 
@@ -1858,6 +1961,11 @@ function sortChild(parent) {
                 if (a.score < b.score) return 1;
                 return 0;
             }
+        }
+        if (stat == "variance") {
+            var temp = a
+            a = b
+            b = temp
         }
 
         if (a[stat] > b[stat]) return -1;

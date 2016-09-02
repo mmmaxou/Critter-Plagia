@@ -4,6 +4,7 @@ body {
     background-size: cover;
     padding: 0px;
     margin: 0px;
+    overflow-x: hidden;
 }
 #gradient {
     width: 100%;
@@ -236,7 +237,6 @@ th {
 
 .custom-qtip {
     width: 30vw !important;
-    text-transform: capitalize;
 }
 .custom-qtip h2{
 	margin: 5px auto;
