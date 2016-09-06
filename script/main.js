@@ -154,7 +154,7 @@ function Army() {
     this.currentBattle = false;
 
     this.findPlace = function (critter) {
-        var score = critter.score
+        var score = critter.score;
         var place = -1;
 
         for (i = 0; i < this.level; i++) {
@@ -165,7 +165,7 @@ function Army() {
 
         for (i = 0; i < this.level; i++) {
             if (this.soldiers[i] != undefined && this.soldiers[i].score < minScore) {
-                minScore = this.soldiers[i].score
+                minScore = this.soldiers[i].score;
                 place = i
             }
         }
@@ -329,7 +329,7 @@ function Army() {
                 }
 
             } else { // COMBAT TERMINÉ
-                if (army.ennemyArmy.length == 0) {
+                if (army.ennemyArmy.length == 0) { // COMBAT GAGNEE
 
                     if ( army.currentBattle.state == "clickableEnnemyMound") {
                         map.transformCoord(map.data.ennemyMound.coord) == "clearedEnnemyMound"
@@ -411,7 +411,7 @@ function Army() {
             (200/(i+1)*i)
         hp = Math.round(hp)
         return hp
-    }
+    };
     this.getAtk = function(i,j) {
         var atk        
         atk = Math.floor(Math.random() * j + j + 3) +
@@ -512,38 +512,38 @@ function Map() {
                 this.data.row[i][j].tile.attr('onclick', "alerter(this)").css('background-color', '#fff')
             }
         }
-    }
+    };
     this.linkJQuery = function () {
         for (var i = 0; i < this.data.height; i++) {
             for (var j = 0; j < this.data.width; j++) {
-                this.data.row[i][j].tile = $('#row' + i + '>#col' + j)
+                this.data.row[i][j].tile = $('#row' + i + '>#col' + j);
                 this.data.row[i][j].tile.attr('onclick', "alerter(this)").css('background-color', '#fff')
             }
         }
         //        this.data.ennemyMound = this.transformCoord(this.data.ennemyMound.coord)
-    }
+    };
     this.placeMound = function () {
-        var x = Math.floor(Math.random() * this.data.width)
-        var y = Math.floor(Math.random() * this.data.height)
+        var x = Math.floor(Math.random() * this.data.width);
+        var y = Math.floor(Math.random() * this.data.height);
 
-        this.data.mound = this.data.row[y][x]
+        this.data.mound = this.data.row[y][x];
         this.data.mound.state = "mound"
-    }
+    };
     this.placeEnnemyMound = function () {
-        var coord = this.createEnnemyMoundCoord()
-        var x = coord[0]
-        var y = coord[1]
+        var coord = this.createEnnemyMoundCoord();
+        var x = coord[0];
+        var y = coord[1];
 
-        this.data.ennemyMound = this.data.row[y][x]
-        this.data.ennemyMound.state = "ennemyMound"
+        this.data.ennemyMound = this.data.row[y][x];
+        this.data.ennemyMound.state = "ennemyMound";
         this.transformCoord(this.data.ennemyMound.coord).level += 2
     }
     this.distanceToMound = function (y, x) {
-        var mY = this.data.mound.coord[0]
-        var mX = this.data.mound.coord[1]
+        var mY = this.data.mound.coord[0];
+        var mX = this.data.mound.coord[1];
 
-        var deltaX = Math.abs(x - mX)
-        var deltaY = Math.abs(y - mY)
+        var deltaX = Math.abs(x - mX);
+        var deltaY = Math.abs(y - mY);
 
         return deltaX + deltaY
     }
@@ -953,8 +953,8 @@ function log(obj) {
 
 /* ########## CREER UN CRITTER ########## */
 
-function makeStat(a, b) {
-    
+function makeStat(a=5, b=5) {
+
     /*
     if (isNaN(a)) a = 1
     if (isNaN(b)) b = 1
@@ -993,15 +993,15 @@ function makeStat(a, b) {
     c = c + adding + boost;
     if (c < 1) c = 1;
     */
-    
+
     var min = Math.min(a,b)
     var max = Math.max(a,b)
-    
+
     if ( min >= 2 ) min = Math.floor( min - min/100 )
     max = Math.ceil( max + max/100)
-    
+
     var value = Math.floor(Math.random() * (max - min +1)) + min;
-    
+
     return value;
 }
 
@@ -1043,29 +1043,23 @@ function createChild() {
 
     };
 
-    parentMutation(king, queen, child)
+    child = parentMutation(king, queen, child)
     if ( randomTestOutOf100(1) ) {
-        critterMutation(child);
+        child = critterMutation(child);
     }
 
     calculateTotalStat(child)
-
     calculateVariance(child)
 
-    var i, random = Math.round(Math.random());
-    if (random == 1) {
+    if (randomTestOutOf100(50)) {
         child.queen = queen;
         child.queen.queen = null;
 
-        i = nextFreePlace("queen", child);
-        if (i != -1) queenChild[i] = child;
-        if (i == -1) {
+        queenChild.push(child)
+        sortChild("queen")
 
-            queenChild.push(child)
-            sortChild("queen")
-            queenChild.pop()
+        if(queenChild.length > upgrade+1) queenChild.pop()
 
-        }
         updateQueenChild();
 
     } //QUEEN
@@ -1073,15 +1067,10 @@ function createChild() {
         child.king = king;
         child.king.king = null;
 
-        i = nextFreePlace("king", child);
-        if (i != -1) kingChild[i] = child
-        if (i == -1) {
+        kingChild.push(child)
+        sortChild("king")
 
-            kingChild.push(child)
-            sortChild("king")
-            kingChild.pop()
-
-        }
+        if(kingChild.length > upgrade+1) kingChild.pop()
 
         updateKingChild();
     } //KING
@@ -1098,17 +1087,6 @@ function createChild() {
     */
 }
 
-function critterBoost(value) {
-    var x = Math.ceil(Math.random()*100)
-    var boost = 0
-    if ( x==100 ) {
-        boost = value / 15
-        boost -= Math.pow(boost,1.15)/20
-        boost = Math.ceil(boost)
-        boost++
-    }
-    return (boost)
-}
 function critterMutation(child) {
 
     var mutation = mapMutation[ Math.floor( Math.random()*(mapMutation.length) ) ]
@@ -1118,6 +1096,7 @@ function critterMutation(child) {
         child.newMutation = true
     } 
 
+    return child
 }
 function parentMutation(king, queen, child) {
 
@@ -1151,22 +1130,27 @@ function parentMutation(king, queen, child) {
             a = getMutationProbabilityAndValue(mutation, heritage, gene[mutation])
             proba.push(a)
         }
-        //    log(gene)
-        //    log(proba)
 
         for ( i=0 ; i<proba.length ; i++ ) {
 
             if ( proba[i][1] != "none" ) {
-                child.mutation.push(mapMutation.find(function(a){
+                var foundMutation = mapMutation.find(function(a){
                     return a.id == this[0]
-                },proba[i]))
+                },proba[i])
+
+                child.mutation.push({id:0})
                 child.mutation[child.mutation.length-1].expression = proba[i][1]
                 child.mutation[child.mutation.length-1].value = proba[i][2]
+                child.mutation[child.mutation.length-1].id = foundMutation.id
+                child.mutation[child.mutation.length-1].name = foundMutation.name
+                child.mutation[child.mutation.length-1].trait = foundMutation.trait            
+
                 var trait = proba[i][3] + "Bonus"
                 child[trait] += proba[i][2]
             }
         }
     }
+    return child
 }
 function getMutationProbabilityAndValue(mutation, heritage, array){
     var result = [mutation], c
@@ -1204,7 +1188,10 @@ function getMutationProbabilityAndValue(mutation, heritage, array){
 
     return result
 }
-
+function trouverId(mutation) {
+    log(this    )
+    return mutation.id === this[0]
+}
 function calculateTotalStat(child) {
 
     child.vita = getValue(child.vitaBase, child.vitaBonus)
@@ -1285,35 +1272,6 @@ $(document).ready(function () {
         }
     });
 });
-
-
-
-
-/* ########## SELECTION ET PLACEMENT CRITTER ########### */
-
-function nextFreePlace(parent, child) {
-    var tab;
-    if (parent == "queen") tab = queenChild;
-    if (parent == "king") tab = kingChild;
-
-    var place = 0;
-    var found = false;
-
-    for (i = 0; i <= upgrade; i++) {
-        if (tab[i] == null && found == false) {
-            place = i;
-            found = true;
-        }
-    }
-
-    if (found == false) {
-        return -1;
-    } else {
-        return place;
-    }
-} //Retourne la place libre suivante. Si aucune trouvé et que le dernier est mieux que l'enfant actuel, renvoi -1.
-
-
 
 
 /* ########## BOOST ET UPGRADE ########## */
@@ -1482,7 +1440,7 @@ function updateKing() {
             updateMutation('king')
         }
     }
-    
+
     $('#kingScore').qtip({
         content: {
             text: "Variance du Donger : " + critterKing.variance
@@ -1634,7 +1592,8 @@ function updateQueenChild() {
 } //AFFICHE LE 1er ENFANT REINE CRITTER
 
 function updateMutation(parent , place="null") {
-    if ( parent == "kingChild" ) critter = kingChild[place]
+    var critter;
+    if (parent == "kingChild") critter = kingChild[place]
     if ( parent == "queenChild" ) critter = queenChild[place]
     if ( parent == "king" ) critter = critterKing
     if ( parent == "queen" ) critter = critterQueen
@@ -1819,23 +1778,19 @@ function updateMutation(parent , place="null") {
             }).next().remove()
         }
     }
+
 }
 function getHtmlMutation(critter, stat) { 
     var html, i, mut, parentMutation, style
 
     html = '<div class="hidden text-center"><h2>Mutations</h2>'
-    /*
-    for (i=0; i<tour; i++) {
-        mut = critter.mutation[i]
-        html = html + '<table class="table table-responsive table-hover table-bordered text-center"><tbody><tr><th>Nom</th><td>'+mut.name+'</td></tr><tr><th>Effet</th><td>+ '+mut.value+'</td></tr><tr><th colspan="2">'+mut.expression+'</th></tr></tbody></table>'
-    }
-*/
+
     critter.mutation.forEach(function(item){
 
         if ( item.trait == stat ) {
 
-            if ( critterQueen != undefined) parentMutation = critterQueen.mutation
-            if ( critterKing != undefined) parentMutation = critterKing.mutation
+            if ( typeof critter.queen === 'object' && critter.queen != null) parentMutation = critterQueen.mutation
+            if ( typeof critter.king === 'object'  && critter.king != null) parentMutation = critterKing.mutation
 
             if ( parentMutation != undefined ) {
                 parentMutation = parentMutation.find(function(parentItem){
@@ -1860,31 +1815,31 @@ function getHtmlMutation(critter, stat) {
     return html
 }
 function getAppendMutation(number, critter, stat) {
-    var append, style, value=0, parentStat=stat+"Bonus";
-    
-    for ( var mutation of critter.mutation ) {
-        if ( mutation.trait == stat ) value += mutation.value
+    var append, style, statBonus=stat+"Bonus", parent
+
+    if ( typeof critter.king === 'object' && critter.king != null) {
+        parent = critterKing
+//        log(parent)
     }
-    
-    if ( critter.king != undefined ) {
-        if ( value > critterKing[parentStat] ) {
+    if ( typeof critter.queen === 'object' && critter.queen != null ) {
+        parent = critterQueen
+    } else style = "color:black;"
+
+    if ( parent !== undefined ) {
+
+        if ( critter[statBonus] > parent[statBonus] ) {
             style = "color:#9ace9a;"
-        } else if ( value < critterKing[parentStat] ) {
+        } else if ( critter[statBonus] < parent[statBonus] ) {
             style = "color:red;"
-        } else {
+        } else if ( critter[statBonus] == parent[statBonus]) {
             style = "color:black;"
         }
+
+//        log("critter:"+critter[statBonus]+" ; parent:"+parent[statBonus]+" ; style:"+style)
+
     }
-    if ( critter.queen != undefined ) {
-        if ( value > critterQueen[parentStat] ) {
-            style = "color:#9ace9a;"
-        } else if ( value < critterQueen[parentStat] ) {
-            style = "color:red;"
-        } else {
-            style = "color:black;"
-        }
-    }
-    
+
+
     if ( critter.newMutation == true ) {
         append = '<p class="mutation"><span class="glyphicon glyphicon-star" aria-hidden="true"></span>'+number+' mutation(s)<span class="glyphicon glyphicon-star" aria-hidden="true"></span></p>'
     } else {
@@ -1902,7 +1857,7 @@ function colorKingChild(stat, i) {
     if (child > parent) $('#kingChild' + i + majStat).css("color", "#9ace9a");
     if (child < parent) $('#kingChild' + i + majStat).css("color", "red");
     if (child == parent) $('#kingChild' + i + majStat).css("color", "black");
-} //Colore
+}
 function colorQueenChild(stat, i) {
     var majStat = stat.charAt(0).toUpperCase() + stat.substring(1);
 
@@ -1912,7 +1867,7 @@ function colorQueenChild(stat, i) {
     if (child > parent) $('#queenChild' + i + majStat).css("color", "#9ace9a");
     if (child < parent) $('#queenChild' + i + majStat).css("color", "red");
     if (child == parent) $('#queenChild' + i + majStat).css("color", "black");
-} //Colore
+}
 
 function sortChild(parent) {
     var tab, stat
@@ -2318,7 +2273,6 @@ function testCritter() {
 
     }
 }
-
 
 
 function randomTestOutOf100(number) {

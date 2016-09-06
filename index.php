@@ -425,7 +425,7 @@
                                     <h1>Guerre</h1>
                                 </div>
                                 <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton">
-                                    <h2 id="army-level">Niveau 1</h2>
+                                    <h2 id="map-level">Niveau 1</h2>
                                 </div>
                                 <div class="col-lg-3 col-sm-3 col-xs-6 col-md-6 bouton disabled">
                                     <button class="btn btn-info btn-block disabled" id="map-upgrade" aria-disabled="true" onclick="map.levelUp()">Continuer</button>
@@ -473,6 +473,9 @@
                 </div>
                 <div class="col-xs-8 col-xs-offset-2 col-sm-offset-0 col-sm-2" style="color:white;">
                     <p>Appuyez sur <b>SHIFT</b> pour voir plus d'options</p>
+                </div>
+                <div class="col-xs-8 col-xs-offset-2 col-sm-offset-2 col-sm-2" style="color:white;">
+                    <p>Version 1.0</p>
                 </div>
                 <div class="col-xs-offset-3 col-xs-6 col-md-offset-4 col-md-4 well savePop">
                     <p>Game Saved</p>
