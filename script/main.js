@@ -455,6 +455,7 @@ function Map() {
         row: [],
         mound: {},
         ennemyMound: {},
+        mutationTile: [],
         level: 0
 
     }
@@ -563,7 +564,7 @@ function Map() {
 
         } while (dist < minDist)
             return [x, y]
-            }
+    }
     this.update = function() {
 
         $('#map-level').text('Niveau ' + (this.data.level+1))
@@ -574,8 +575,20 @@ function Map() {
                 this.addButton()
             }
         }
-
-
+    }
+    
+    
+    //AJOUTER LES AUTRES ETATS
+    this.addSpecialTiles = function (distance, state) {
+        var x,y;
+        do {
+            x = Math.floor(Math.random() * this.data.width)
+            y = Math.floor(Math.random() * this.data.height)
+            dist = this.distanceToMound(y, x)
+        } while (dist != distance)
+            
+        this.data.mutationTile = [x,y];
+        this.changeState([x,y], state);
     }
 
     this.transformCoord = function (array) {

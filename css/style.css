@@ -152,6 +152,9 @@ th {
 #army button{
     height: 3.65em;
 }
+.usine-creation {
+    margin-bottom: 100px;
+}
 
 .usine-creation .well{
     background-color: #2067a3;
